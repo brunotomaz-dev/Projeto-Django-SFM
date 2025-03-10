@@ -1,0 +1,48 @@
+{
+  "cSpell.words": [
+    "apscheduler",
+    "asof",
+    "astype",
+    "automacao",
+    "bfill",
+    "CCCA",
+    "CDMQ",
+    "corsheaders",
+    "cumsum",
+    "dataframe",
+    "dataframes",
+    "diferenca",
+    "downcasting",
+    "dropna",
+    "DTRPBG",
+    "Emissao",
+    "ffill",
+    "fillna",
+    "filterset",
+    "HRRPBG",
+    "infoihm",
+    "isin",
+    "iterrows",
+    "jobstores",
+    "maquinaihm",
+    "maquinainfo",
+    "notna",
+    "NRRPET",
+    "paes",
+    "producao",
+    "qualidadeihm",
+    "recno",
+    "simplejwt",
+    "sqlserver",
+    "TOTVSDB",
+    "viewsets"
+  ],
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "name": "LocalDB",
+      "database": "${workspaceFolder:Projeto Django Backend}/backend/db.sqlite3"
+    }
+  ]
+}
