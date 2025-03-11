@@ -733,6 +733,12 @@ class ProductionIndicators:
         mask = (df.producao_esperada == 0) & (df[indicator.value] == 0)
         df.loc[mask, indicator.value] = 0
 
+        # Ajustar a eficiência para np.nan se produção total for menor que 200
+        mask = df.total_produzido < 200
+        df.loc[mask, indicator.value] = np.nan
+        df.loc[mask, "producao_esperada"] = 0
+        df.loc[mask, "tempo_esperado"] = 0
+
         # Corrigir a eficiência para 0 caso seja negativa
         df[indicator.value] = np.where(df[indicator.value] < 0, 0, df[indicator.value])
 
