@@ -1,4 +1,4 @@
-""" Módulo de criação de modelos do Django """
+"""Módulo de criação de modelos do Django"""
 
 # cSpell:ignore usuario
 from django.db import models
@@ -252,6 +252,7 @@ class AbsenceLog(models.Model):
     motivo = models.CharField(max_length=256)
     data_registro = models.DateField()
     hora_registro = models.TimeField()
+    data_occ = models.DateField()
     usuario = models.CharField(max_length=50)
 
     class Meta:

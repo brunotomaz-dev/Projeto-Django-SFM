@@ -207,7 +207,7 @@ class RepairSerializer(DynamicFieldsModelSerializer):
         fields = "__all__"
 
 
-class AbsenceLogSerializer(serializers.ModelSerializer):
+class AbsenceLogSerializer(DynamicFieldsModelSerializer):
     """Serializador dos dados de reparo"""
 
     class Meta:
