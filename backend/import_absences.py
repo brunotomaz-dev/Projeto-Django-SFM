@@ -86,19 +86,20 @@ def process_row(row):
                whether the object was created (True) or updated (False).
     """
 
-    data_reg = datetime.strptime(row["Data"], "%Y-%m-%d").date()
-    hora_reg = datetime.strptime(row["Hora"], "%H:%M:%S").time()
+    data_reg = datetime.strptime(row["data_registro"], "%Y-%m-%d").date()
+    hora_reg = datetime.strptime(row["hora_registro"], "%H:%M:%S").time()
 
     return AbsenceLog.objects.update_or_create(  # pylint: disable=no-member
-        setor=row["Setor"],
-        turno=row["Turno"],
-        nome=row["Nome"],
-        tipo=row["Tipo"],
+        setor=row["setor"],
+        turno=row["turno"],
+        nome=row["nome"],
+        tipo=row["tipo"],
+        data_occ=row["data_occ"],
         defaults={
-            "motivo": row["Motivo"] if not pd.isna(row["Motivo"]) else "",
+            "motivo": row["motivo"] if not pd.isna(row["motivo"]) else "",
             "hora_registro": hora_reg,
             "data_registro": data_reg,
-            "usuario": row["Usuario"],
+            "usuario": row["usuario"],
         },
     )
 

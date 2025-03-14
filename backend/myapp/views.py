@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from .authentication import AppTokenAuthentication
 from .data_analysis import CleanData
 from .filters import (
     AbsenceLogFilter,
@@ -41,6 +42,7 @@ from .models import (
     QualProd,
     Repair,
 )
+from .permissions import HomeAccessPermission
 from .serializers import (
     AbsenceLogSerializer,
     CustomTokenObtainPairSerializer,
@@ -131,8 +133,8 @@ class MaquinaInfoViewSet(BasicDynamicFieldsViewSets):
     serializer_class = MaquinaInfoSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = MaquinaInfoFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 class MaqInfoHourProductionViewSet(viewsets.ModelViewSet):
@@ -258,8 +260,8 @@ class InfoIHMViewSet(BasicDynamicFieldsViewSets):
     serializer_class = InfoIHMSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = InfoIHMFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 # ================================================================================================ #
@@ -356,8 +358,8 @@ class QualProdViewSet(BasicDynamicFieldsViewSets):
     serializer_class = QualProdSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = QualProdFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 # ================================================================================================ #
@@ -386,8 +388,8 @@ class EficienciaViewSet(BasicDynamicFieldsViewSets):  # cSpell: words eficiencia
     serializer_class = EficienciaSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = EficienciaFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 class PerformanceViewSet(BasicDynamicFieldsViewSets):
@@ -413,8 +415,8 @@ class PerformanceViewSet(BasicDynamicFieldsViewSets):
     serializer_class = PerformanceSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = PerformanceFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 class RepairViewSet(BasicDynamicFieldsViewSets):
@@ -440,14 +442,14 @@ class RepairViewSet(BasicDynamicFieldsViewSets):
     serializer_class = RepairSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = RepairFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 # ================================================================================================ #
 #                                            ABSENTEÍSMO                                           #
 # ================================================================================================ #
-class AbsenceViewSet(viewsets.ModelViewSet):
+class AbsenceViewSet(BasicDynamicFieldsViewSets):
     """
     Um ViewSet para manipulação de operações de registro de ausências na API.
     Este ViewSet fornece operações CRUD para objetos AbsenceLog através de uma interface REST API.
@@ -465,8 +467,8 @@ class AbsenceViewSet(viewsets.ModelViewSet):
     serializer_class = AbsenceLogSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = AbsenceLogFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 # ================================================================================================ #
@@ -495,8 +497,8 @@ class PresenceLogViewSet(viewsets.ModelViewSet):
     serializer_class = PresenceLogSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = PresenceLogFilter
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
 
 # ================================================================================================ #
@@ -649,8 +651,8 @@ class StockOnCFViewSet(APIView):
     Exibe informações de estoque de produtos em CF.
     """
 
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
     def get(self, _request):
         """
@@ -854,6 +856,9 @@ class CartCountViewSet(APIView):
     Exemplo de uso:
     - GET /cart_count/period/?period=2021-01-01,2021-01-31
     """
+
+    permission_classes = [HomeAccessPermission]
+    authentication_classes = [AppTokenAuthentication, JWTAuthentication]
 
     def get(self, request):
         """

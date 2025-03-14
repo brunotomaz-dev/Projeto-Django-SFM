@@ -125,6 +125,7 @@ class AbsenceLogFilter(django_filters.FilterSet):
     """Filtro para registros de absenteísmo"""
 
     data_registro = django_filters.DateFilter(field_name="data_registro")
+    data_occ = django_filters.DateFilter(field_name="data_occ")
     nome = django_filters.CharFilter(lookup_expr="icontains")
     tipo = django_filters.CharFilter(lookup_expr="exact")
     setor = django_filters.CharFilter(lookup_expr="exact")
@@ -138,6 +139,7 @@ class AbsenceLogFilter(django_filters.FilterSet):
             "nome": ["exact", "icontains"],
             "tipo": ["exact"],
             "setor": ["exact"],
+            "data_occ": ["exact", "gt", "lt", "gte", "lte"],
         }
 
 

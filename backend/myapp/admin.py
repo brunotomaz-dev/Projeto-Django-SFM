@@ -13,6 +13,7 @@ from .models import (
     MaquinaIHM,
     MaquinaInfo,
     Performance,
+    PresenceLog,
     QualidadeIHM,
     QualProd,
     Repair,
@@ -29,3 +30,4 @@ admin.site.register(Eficiencia)
 admin.site.register(Performance)
 admin.site.register(Repair)
 admin.site.register(AbsenceLog)
+admin.site.register(PresenceLog)
