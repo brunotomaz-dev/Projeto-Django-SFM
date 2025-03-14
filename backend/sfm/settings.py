@@ -35,15 +35,13 @@ SECRET_KEY = (
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "testserver",
-]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver", "192.168.0.121"]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Adicione o endereço do seu frontend
+    "http://localhost:5173",
+    "http://192.168.0.121:5173",
     "http://localhost:8502",
+    "http://192.168.0.121:8502",
 ]
 
 
