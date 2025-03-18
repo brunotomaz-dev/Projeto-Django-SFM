@@ -1,6 +1,6 @@
 """Módulo de criação de modelos do Django"""
 
-# cSpell:ignore usuario
+# cSpell:ignore usuario panificacao lideranca descricao contencao solucao responsavel conclusao
 from django.db import models
 
 
@@ -282,3 +282,29 @@ class PresenceLog(models.Model):
 
         db_table = "analysis_presence"
         indexes = [models.Index(fields=["data_registro"])]
+
+
+class ActionPlan(models.Model):
+    """Tabela de Plano de Ação"""
+
+    recno = models.AutoField(primary_key=True)
+    indicador = models.CharField(max_length=3)
+    prioridade = models.SmallIntegerField()
+    impacto = models.SmallIntegerField()
+    data_registro = models.DateField()
+    turno = models.CharField(max_length=3)
+    descricao = models.CharField(max_length=256)
+    causa_raiz = models.CharField(max_length=256)
+    contencao = models.CharField(max_length=256)
+    solucao = models.CharField(max_length=256)
+    feedback = models.CharField(max_length=256)
+    responsavel = models.CharField(max_length=50)
+    data_conclusao = models.DateField(null=True)
+    conclusao = models.SmallIntegerField()
+    lvl = models.SmallIntegerField()
+
+    class Meta:
+        """Definição do nome da tabela"""
+
+        db_table = "analysis_actionPlan"
+        indexes = [models.Index(fields=["data_registro", "conclusao"])]

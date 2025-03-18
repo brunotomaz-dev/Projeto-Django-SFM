@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 from .views import (
     AbsenceViewSet,
+    ActionPlanViewSet,
     CartCountViewSet,
     CustomTokenObtainPairView,
     EficienciaViewSet,
@@ -39,6 +40,7 @@ router.register(r"repair", RepairViewSet)
 router.register(r"absenteismo", AbsenceViewSet)  # cSpell: words absenteismo
 router.register(r"maq_info_hour_prod", MaqInfoHourProductionViewSet, basename="maq_info_hour_prod")
 router.register(r"presence_log", PresenceLogViewSet)
+router.register(r"action_plan", ActionPlanViewSet)
 
 
 urlpatterns = [

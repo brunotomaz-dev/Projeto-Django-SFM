@@ -16,6 +16,7 @@ class SpecificTablesRouter:
         "analysis_repair",
         "analysis_absent",
         "analysis_presence",
+        "analysis_actionPlan",
     ]  # Adicione aqui as tabelas específicas
 
     def db_for_read(self, model, **hints):  # pylint: disable=unused-argument

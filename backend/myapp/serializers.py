@@ -8,6 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     AbsenceLog,
+    ActionPlan,
     Eficiencia,
     InfoIHM,
     MaquinaCadastro,
@@ -224,4 +225,14 @@ class PresenceLogSerializer(serializers.ModelSerializer):
         """Classe de Metadados"""
 
         model = PresenceLog
+        fields = "__all__"
+
+
+class ActionPlanSerializer(DynamicFieldsModelSerializer):
+    """Serializador do PLano de Ação"""
+
+    class Meta:
+        """Classe de Metadados"""
+
+        model = ActionPlan
         fields = "__all__"

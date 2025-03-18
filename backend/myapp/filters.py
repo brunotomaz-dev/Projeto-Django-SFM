@@ -1,9 +1,12 @@
 """Módulo com os filtros do Django Rest Framework"""
 
+# cSpell: words conclusao
+
 import django_filters
 
 from .models import (
     AbsenceLog,
+    ActionPlan,
     Eficiencia,
     InfoIHM,
     MaquinaIHM,
@@ -154,4 +157,20 @@ class PresenceLogFilter(django_filters.FilterSet):
         model = PresenceLog
         fields = {
             "data_registro": ["exact", "gt", "lt", "gte", "lte"],
+        }
+
+
+class ActionPlanFilter(django_filters.FilterSet):
+    """Filtro para registros de presença"""
+
+    data_registro = django_filters.DateFilter(field_name="data_registro")
+    conclusao = django_filters.CharFilter(lookup_expr="exact")
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = ActionPlan
+        fields = {
+            "data_registro": ["exact", "gt", "lt", "gte", "lte"],
+            "conclusao": ["exact"],
         }
