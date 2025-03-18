@@ -102,7 +102,7 @@ def _save_processed_data(dados_processados):
             )
 
 
-DATA_ANALYSIS = "2025-03-12"
+# DATA_ANALYSIS = "2025-03-14"
 
 
 def today_date():
@@ -116,12 +116,12 @@ def analisar_dados():
         try:
 
             # Criar request com filtros
-            # params = {"data_registro": today_date()}
+            params = {"data_registro": today_date()}
 
-            params = {
-                "data_registro__gte": DATA_ANALYSIS,
-                "data_registro__lte": today_date(),
-            }
+            # params = {
+            #     "data_registro__gte": DATA_ANALYSIS,
+            #     "data_registro__lte": today_date(),
+            # }
 
             info_view = MaquinaInfoViewSet.as_view({"get": "list"})
             ihm_view = MaquinaIHMViewSet.as_view({"get": "list"})
@@ -153,8 +153,8 @@ def create_production_data():
         try:
             today = today_date()
 
-            # params = {"period": f"{today},{today}"}
-            params = {"period": f"{DATA_ANALYSIS},{today}"}
+            params = {"period": f"{today},{today}"}
+            # params = {"period": f"{DATA_ANALYSIS},{today}"}
 
             prod_view = MaquinaInfoProductionViewSet.as_view()
             qual_view = QualidadeIHMViewSet.as_view({"get": "list"})
@@ -205,14 +205,14 @@ def create_indicators():
         try:
             today = today_date()
             # Define os parâmetros
-            # params = {"data_registro": today}
+            params = {"data_registro": today}
 
             # params = {"data_registro": DATA_ANALYSIS}
 
-            params = {
-                "data_registro__gte": DATA_ANALYSIS,
-                "data_registro__lte": today,
-            }
+            # params = {
+            #     "data_registro__gte": DATA_ANALYSIS,
+            #     "data_registro__lte": today,
+            # }
 
             # Faz a requisição de dados
             production = QualProdViewSet.as_view({"get": "list"})

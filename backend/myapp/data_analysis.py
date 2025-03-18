@@ -714,7 +714,7 @@ class ProductionIndicators:
         """
 
         # Variável para identificar quando o produto possui a palavra " BOL "
-        mask_bolinha = df["produto"].str.contains("BOL ")
+        mask_bolinha = df["produto"].str.contains(" BOL")
 
         # Nova coluna para o tempo esperado de produção
         df["producao_esperada"] = round(
@@ -734,7 +734,7 @@ class ProductionIndicators:
         df.loc[mask, indicator.value] = 0
 
         # Ajustar a eficiência para np.nan se produção total for menor que 200
-        mask = df.total_produzido < 200
+        mask = df.total_produzido <= 200
         df.loc[mask, indicator.value] = np.nan
         df.loc[mask, "producao_esperada"] = 0
         df.loc[mask, "tempo_esperado"] = 0
@@ -742,8 +742,8 @@ class ProductionIndicators:
         # Corrigir a eficiência para 0 caso seja negativa
         df[indicator.value] = np.where(df[indicator.value] < 0, 0, df[indicator.value])
 
-        # Ajustar eficiência para tempo de produção esperado menor que 10
-        mask = df.tempo_esperado < 10
+        # Ajustar eficiência para tempo de produção esperado menor ou igual a 10
+        mask = df.tempo_esperado <= 10
         df.loc[mask, indicator.value] = 0
         df.loc[mask, "producao_esperada"] = 0
         df.loc[mask, "tempo_esperado"] = 0
