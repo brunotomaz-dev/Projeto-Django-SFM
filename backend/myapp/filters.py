@@ -52,6 +52,7 @@ class MaquinaInfoFilter(django_filters.FilterSet):
             "data_registro": ["exact", "gt", "lt", "gte", "lte"],
             "turno": ["exact"],
             # "maquina_id": ["exact"],
+            "status": ["exact"],
         }
 
 
