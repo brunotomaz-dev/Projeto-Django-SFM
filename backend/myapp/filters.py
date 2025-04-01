@@ -51,6 +51,26 @@ class InfoIHMFilter(django_filters.FilterSet):
     """Filtro de informações de máquina"""
 
     data_registro = django_filters.DateFilter(field_name="data_registro")
+    maquina_id = django_filters.CharFilter(method="filter_maquina_id")
+
+    def filter_maquina_id(self, queryset, _name, value):
+        """
+        Filter queryset based on machine IDs.
+        This method filters the queryset by the 'maquina_id' field. It accepts both
+        single ID values and comma-separated lists of IDs.
+        Parameters:
+            queryset (QuerySet): The Django queryset to filter
+            _name (str): The name of the filter (not used in this method)
+            value (str): The machine ID(s) to filter by. Can be a single ID or
+                         multiple IDs separated by commas.
+        Returns:
+            QuerySet: Filtered queryset containing only objects with the specified machine ID(s)
+        """
+
+        if "," in value:  # Se contém vírgula, é uma lista
+            maquina_ids = value.split(",")
+            return queryset.filter(maquina_id__in=maquina_ids)
+        return queryset.filter(maquina_id=value)
 
     class Meta:
         """Classe de metadados"""
@@ -58,7 +78,7 @@ class InfoIHMFilter(django_filters.FilterSet):
         model = InfoIHM
         fields = {
             "data_registro": ["exact", "gt", "lt", "gte", "lte"],
-            "maquina_id": ["exact"],
+            # "maquina_id": ["exact"],
             "linha": ["exact"],
             "turno": ["exact"],
         }
