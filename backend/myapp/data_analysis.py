@@ -160,7 +160,7 @@ class InfoIHMJoin:
             on="data_hora",
             by="maquina_id",
             direction="nearest",
-            tolerance=pd.Timedelta("3m30sec"),
+            tolerance=pd.Timedelta("2m10sec"),
         )
 
         # Ajuste de Linha que não leva em conta a data
