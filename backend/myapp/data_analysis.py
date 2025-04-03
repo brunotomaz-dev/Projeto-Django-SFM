@@ -522,6 +522,9 @@ class ProductionIndicators:
         # Cria coluna de desconto
         df["desconto"] = 0
 
+        if df.afeta_eff.isnull().all():
+            df["afeta_eff"] = 0
+
         # Primeiro verifica se afeta_eff é 1, nesses casos sempre desconta o tempo total
         mask_afeta_eff = df.afeta_eff == 1
         df.loc[mask_afeta_eff, "desconto"] = df.loc[mask_afeta_eff, "tempo"]
