@@ -199,7 +199,6 @@ class InfoIHMJoin:
                 "os_numero",
                 "operador_id",
                 "s_backup",
-                "afeta_eff",
             ]
         ]
 
@@ -254,7 +253,6 @@ class InfoIHMJoin:
             "s_backup",
             "data_registro_ihm",
             "hora_registro_ihm",
-            "afeta_eff",
         ]
 
         # Preencher os valores
@@ -320,7 +318,6 @@ class InfoIHMJoin:
                 data_registro_ihm=("data_registro_ihm", "first"),
                 hora_registro_ihm=("hora_registro_ihm", "first"),
                 s_backup=("s_backup", "first"),
-                afeta_eff=("afeta_eff", "first"),
                 data_hora=("data_hora", "first"),
                 change=("change", "first"),
                 maquina_id_change=("maquina_id_change", "first"),
@@ -522,31 +519,18 @@ class ProductionIndicators:
         # Cria coluna de desconto
         df["desconto"] = 0
 
-        if df.afeta_eff.isnull().all():
-            df["afeta_eff"] = 0
+        # Lidar com situações que não afetam o indicador
+        mask = df[["motivo", "problema", "causa"]].apply(lambda x: x.isin(skip_list).any(), axis=1)
+        df.loc[mask, "desconto"] = 0 if indicator == IndicatorType.REPAIR else df["tempo"]
 
-        # Primeiro verifica se afeta_eff é 1, nesses casos sempre desconta o tempo total
-        mask_afeta_eff = df.afeta_eff == 1
-        df.loc[mask_afeta_eff, "desconto"] = df.loc[mask_afeta_eff, "tempo"]
+        # Cria um dict para indicadores
+        indicator_dict = {
+            IndicatorType.EFFICIENCY: df,
+            IndicatorType.PERFORMANCE: df[~mask],
+            IndicatorType.REPAIR: df[mask],
+        }
 
-        # Lidar com situações que não afetam o indicador (conforme lista skip_list)
-        mask_skip = df[["motivo", "problema", "causa"]].apply(
-            lambda x: x.isin(skip_list).any(), axis=1
-        )
-
-        # Aplicar apenas onde afeta_eff não é 1
-        mask_skip = mask_skip & ~mask_afeta_eff
-        df.loc[mask_skip, "desconto"] = (
-            0 if indicator == IndicatorType.REPAIR else df.loc[mask_skip, "tempo"]
-        )
-
-        # Cria um dict para indicadores e filtra apenas registros relevantes
-        # Não considerar registros onde afeta_eff é 1 para REPAIR
-        if indicator == IndicatorType.REPAIR:
-            df = df[~mask_afeta_eff & mask_skip].reset_index(drop=True)
-        # Para EFFICIENCY e PERFORMANCE, usar apenas registros onde afeta_eff é 0
-        elif indicator in (IndicatorType.EFFICIENCY, IndicatorType.PERFORMANCE):
-            df = df[~mask_afeta_eff & ~mask_skip].reset_index(drop=True)
+        df = indicator_dict[indicator].reset_index(drop=True)
 
         # Aplica o desconto de acordo com as colunas "motivo" ou "problema" ou "causa"
         for key, value in desc_dict.items():
