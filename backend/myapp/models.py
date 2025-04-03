@@ -68,7 +68,6 @@ class MaquinaIHM(models.Model):
     operador_id = models.CharField(max_length=9)
     data_registro = models.DateField()
     hora_registro = models.TimeField()
-    afeta_eff = models.SmallIntegerField()
 
     class Meta:
         """Definição do nome da tabela"""
@@ -102,7 +101,6 @@ class InfoIHM(models.Model):
     data_hora = models.DateTimeField()
     data_hora_final = models.DateTimeField()
     tempo = models.IntegerField()
-    afeta_eff = models.SmallIntegerField()
 
     class Meta:
         """Definição do nome da tabela"""
