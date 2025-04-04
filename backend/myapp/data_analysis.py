@@ -394,6 +394,9 @@ class InfoIHMJoin:
         df.data_registro_ihm = df.data_registro_ihm.fillna(df.data_registro)
         df.hora_registro_ihm = df.hora_registro_ihm.fillna(df.hora_registro)
 
+        # Ajusta afeta_eff para ser um inteiro
+        df.afeta_eff = df.afeta_eff.fillna(0).astype(int)  # NOTE - Adicionado para testes
+
         return df
 
 
