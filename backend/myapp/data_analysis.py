@@ -102,7 +102,7 @@ class InfoIHMJoin:
 
         return df
 
-        # @staticmethod
+        # @staticmethod  # NOTE - A ser usado em casos que precisa levar em conta a data
         # def __line_adjust_date_opt(df_ihm: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
         #     ml_map = df_ihm[["data_registro", "maquina_id", "linha", "fabrica"]].drop_duplicates()
 
@@ -199,6 +199,7 @@ class InfoIHMJoin:
                 "os_numero",
                 "operador_id",
                 "s_backup",
+                "afeta_eff",  # NOTE - Mudança para uso da flag afeta_eff
             ]
         ]
 
@@ -253,12 +254,12 @@ class InfoIHMJoin:
             "s_backup",
             "data_registro_ihm",
             "hora_registro_ihm",
+            "afeta_eff",  # NOTE - Mudança para uso da flag afeta_eff
         ]
 
         # Preencher os valores
         df[fill_cols] = df.groupby("group")[fill_cols].ffill()
         df[fill_cols] = df.groupby("group")[fill_cols].bfill()
-        # NOTE - melhor performance do que código original
 
         # Se os dado de uma coluna for '' ou ' ', substituir por NaN
         df = df.replace(r"^s*$", None, regex=True)
@@ -319,6 +320,7 @@ class InfoIHMJoin:
                 hora_registro_ihm=("hora_registro_ihm", "first"),
                 s_backup=("s_backup", "first"),
                 data_hora=("data_hora", "first"),
+                afeta_eff=("afeta_eff", "first"),  # NOTE - Mudança para uso da flag afeta_eff
                 change=("change", "first"),
                 maquina_id_change=("maquina_id_change", "first"),
                 motivo_change=("motivo_change", "first"),
@@ -543,6 +545,10 @@ class ProductionIndicators:
 
         # Caso o desconto seja maior que o tempo, o desconto deve ser igual ao tempo
         df.loc[:, "desconto"] = df[["desconto", "tempo"]].min(axis=1)
+
+        # Lidar com o afeta_eff
+        mask = df.afeta_eff == 1  # NOTE - Mudança para uso da flag afeta_eff
+        df.loc[mask, "desconto"] = df.loc[mask, "tempo"]
 
         # Calcula o excedente, sendo o valor mínimo 0
         df.loc[:, "excedente"] = (df.tempo - df.desconto).clip(lower=0)
