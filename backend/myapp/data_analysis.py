@@ -213,6 +213,12 @@ class InfoIHMJoin:
             }
         )
 
+        # Ajustar flag afeta_eff (1 ñ afeta 0 afeta)
+        df.loc[
+            df["motivo"].isin(NOT_EFF) | df["causa"].isin(NOT_EFF) | df["problema"].isin(NOT_EFF),
+            "afeta_eff",
+        ] = 1  # REVIEW - Ajustar para 0 afeta 1 não afeta
+
         # Reordenar
         df = df.sort_values(by=["linha", "data_registro", "hora_registro"])
 
