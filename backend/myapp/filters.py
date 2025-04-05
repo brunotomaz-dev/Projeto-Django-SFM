@@ -60,7 +60,6 @@ class MaquinaIHMFilter(django_filters.FilterSet):
     """Filtro de informações de IHM de máquina"""
 
     data_registro = django_filters.DateFilter(field_name="data_registro")
-    turno = django_filters.CharFilter(lookup_expr="exact")
     linha = django_filters.CharFilter(lookup_expr="exact")
 
     class Meta:
@@ -69,7 +68,6 @@ class MaquinaIHMFilter(django_filters.FilterSet):
         model = MaquinaIHM
         fields = {
             "data_registro": ["exact", "gt", "lt", "gte", "lte"],
-            "turno": ["exact"],
             "linha": ["exact"],
         }
 
