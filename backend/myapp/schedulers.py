@@ -192,7 +192,7 @@ def __update_ind_db(df: pd.DataFrame, model: models.Model):
             )
 
 
-def create_indicators():
+def create_indicators(reprocess_date=None):
     """
     Função que cria indicadores de eficiência, performance e reparo.
 
@@ -203,8 +203,12 @@ def create_indicators():
     """
     with lock:
         try:
-            today = today_date()
             # Define os parâmetros
+            if reprocess_date:
+                # Se a data de reprocessamento for fornecida, use-a
+                today = reprocess_date
+            else:
+                today = today_date()
             params = {"data_registro": today}
 
             # params = {"data_registro": DATA_ANALYSIS}
@@ -252,6 +256,7 @@ def create_indicators():
 
 def analisar_all_dados():
     """Função que será executada periodicamente"""
+
     analisar_dados()
     create_production_data()
     create_indicators()

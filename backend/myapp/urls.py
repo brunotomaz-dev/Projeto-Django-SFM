@@ -6,6 +6,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
+from .reprocess import reprocess_indicators  # Altere esta importação
 from .views import (
     AbsenceViewSet,
     ActionPlanViewSet,
@@ -57,5 +58,8 @@ urlpatterns = [
     path("caixas_cf/", StockOnCFViewSet.as_view(), name="caixas_cf"),
     path("cart_count/", CartCountViewSet.as_view(), name="cart_count"),
     path("productionByDay/", StockStatusViewSet.as_view(), name="productionByDay"),
+    path(
+        "reprocess_indicators/", reprocess_indicators, name="reprocess_indicators"
+    ),  # Adicione a nova rota
     path("", include(router.urls)),
 ]
