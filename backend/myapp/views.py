@@ -807,7 +807,6 @@ class StockStatusViewSet(APIView):
 
         # Select
         select_ = """SELECT
-            T9_NOME as maquina,
             B1_DESC AS produto,
             D3_QUANT AS quantidade,
             D3_UM AS unidade,
@@ -827,8 +826,6 @@ class StockStatusViewSet(APIView):
             AND CYV_NRRPET=D3_IDENT AND CYV.D_E_L_E_T_<>'*'
             LEFT JOIN CYB000 CYB WITH (NOLOCK) ON CYB_FILIAL=D3_FILIAL
             AND CYB_CDMQ=CYV_CDMQ AND CYB.D_E_L_E_T_<>'*'
-            LEFT JOIN ST9000 ST9 WITH (NOLOCK) ON CYV_CDMQ=T9_CODBEM
-            AND ST9.D_E_L_E_T_<>'*'
         """
 
         # where
@@ -846,7 +843,10 @@ class StockStatusViewSet(APIView):
         # Order By
         order_by_ = "ORDER BY D3_EMISSAO DESC, CYV_HRRPBG DESC"
 
-        query = f"{select_} {from_} {join_} {where_} {order_by_}"
+        # Options
+        options_ = "OPTION (HASH JOIN, FORCE ORDER)"
+
+        query = f"{select_} {from_} {join_} {where_} {order_by_} {options_}"
 
         return query
 
