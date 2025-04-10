@@ -800,18 +800,20 @@ class StockStatusViewSet(APIView):
         Retorna:
         - query: consulta SQL para obter a lista de dados de estoque
         """
-        # cSpell: words QATU LOCPAD totvsdb
+        # cSpell: words QATU LOCPAD totvsdb usuario codbem
 
         # Data de hoje
-        yesterday = (pd.Timestamp.now() - pd.Timedelta(days=1)).strftime("%Y%m%d")
+        curr_date = pd.Timestamp.now().strftime("%Y%m%d")
 
         # Select
         select_ = """SELECT
+            T9_NOME as maquina,
             B1_DESC AS produto,
             D3_QUANT AS quantidade,
             D3_UM AS unidade,
             D3_EMISSAO AS data,
-            CYV_HRRPBG AS hora
+            CYV_HRRPBG AS hora,
+            CYV_CDUSRP AS usuario
         """
 
         # From
@@ -825,6 +827,8 @@ class StockStatusViewSet(APIView):
             AND CYV_NRRPET=D3_IDENT AND CYV.D_E_L_E_T_<>'*'
             LEFT JOIN CYB000 CYB WITH (NOLOCK) ON CYB_FILIAL=D3_FILIAL
             AND CYB_CDMQ=CYV_CDMQ AND CYB.D_E_L_E_T_<>'*'
+            LEFT JOIN ST9000 ST9 WITH (NOLOCK) ON CYV_CDMQ=T9_CODBEM
+            AND ST9.D_E_L_E_T_<>'*'
         """
 
         # where
@@ -835,7 +839,7 @@ class StockStatusViewSet(APIView):
             AND B1_TIPO = 'PA'
             AND D3_CF = 'PR0'
             AND D3_ESTORNO <> 'S'
-            AND D3_EMISSAO > '{yesterday}'
+            AND D3_EMISSAO = '{curr_date}'
             AND SD3.D_E_L_E_T_<>'*'
         """
 
