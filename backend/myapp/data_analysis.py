@@ -173,12 +173,10 @@ class InfoIHMJoin:
         df.contagem_total_ciclos = df.contagem_total_ciclos.astype("Int64")
         df.contagem_total_produzido = df.contagem_total_produzido.astype("Int64")
 
-        # Ajustar Status - true/false para rodando/parada
-        df.status = df.status.map(
-            {"true": "rodando", "false": "parada"}
-        )  # NOTE - .map funciona bem para Series do pandas
+        # NOTE Ajustar Status - true/false para rodando/parada (.map vai bem para Series do pandas)
+        df.status = df.status.map({"true": "rodando", "false": "parada"})
 
-        # Reordenar as colunas
+        # REVIEW Reordenar as colunas (Mudança para uso da flag afeta_eff)
         df = df[
             [
                 "fabrica",
@@ -199,7 +197,7 @@ class InfoIHMJoin:
                 "os_numero",
                 "operador_id",
                 "s_backup",
-                "afeta_eff",  # NOTE - Mudança para uso da flag afeta_eff
+                "afeta_eff",
             ]
         ]
 
@@ -213,11 +211,11 @@ class InfoIHMJoin:
             }
         )
 
-        # Ajustar flag afeta_eff (1 ñ afeta 0 afeta)
+        # REVIEW Ajustar flag afeta_eff (1 ñ afeta 0 afeta)
         df.loc[
             df["motivo"].isin(NOT_EFF) | df["causa"].isin(NOT_EFF) | df["problema"].isin(NOT_EFF),
             "afeta_eff",
-        ] = 1  # REVIEW - Ajustar para 0 afeta 1 não afeta
+        ] = 1
 
         # Reordenar
         df = df.sort_values(by=["linha", "data_registro", "hora_registro"])
@@ -249,7 +247,7 @@ class InfoIHMJoin:
     @staticmethod
     def __fill_occ(df: pd.DataFrame) -> pd.DataFrame:
 
-        # Colunas de interesse
+        # REVIEW - Colunas de interesse (Mudança para uso da flag afeta_eff)
         fill_cols = [
             "motivo",
             "equipamento",
@@ -260,7 +258,7 @@ class InfoIHMJoin:
             "s_backup",
             "data_registro_ihm",
             "hora_registro_ihm",
-            "afeta_eff",  # NOTE - Mudança para uso da flag afeta_eff
+            "afeta_eff",
         ]
 
         # Preencher os valores
@@ -276,17 +274,18 @@ class InfoIHMJoin:
         mask = df.status == "rodando"
         df.loc[mask, fill_cols] = None
 
+        # REVIEW - Preenche na coluna afeta_eff caso não tenha valor
+        df.afeta_eff = df.afeta_eff.fillna(0)
+
         return df
 
     @staticmethod
     def __motivo_change(df: pd.DataFrame) -> pd.DataFrame:
 
-        # Identifica mudanças
+        # REVIEW - Identifica mudanças (Adicionado verificação de afeta_eff)
         mask = (df.motivo.ne(df.motivo.shift()) & df.motivo.notnull()) | (
             (df.causa.ne(df.causa.shift()) & df.causa.notnull())
-            | (
-                df.afeta_eff.ne(df.afeta_eff.shift())
-            )  # REVIEW - Adicionado verificação de afeta_eff
+            | (df.afeta_eff.ne(df.afeta_eff.shift()))
         )
 
         # Cria a coluna motivo_change
@@ -308,7 +307,7 @@ class InfoIHMJoin:
             df.data_registro.astype(str) + " " + df.hora_registro.astype(str)
         )
 
-        # Agrupa por grupo e calcula a diferença de tempo
+        # REVIEW Agrupa por grupo e calcula a diferença de tempo (add afeta_eff)
         df = (
             df.groupby(["group"])
             .agg(
@@ -329,7 +328,7 @@ class InfoIHMJoin:
                 hora_registro_ihm=("hora_registro_ihm", "first"),
                 s_backup=("s_backup", "first"),
                 data_hora=("data_hora", "first"),
-                afeta_eff=("afeta_eff", "first"),  # NOTE - Mudança para uso da flag afeta_eff
+                afeta_eff=("afeta_eff", "first"),
                 change=("change", "first"),
                 maquina_id_change=("maquina_id_change", "first"),
                 motivo_change=("motivo_change", "first"),
@@ -403,8 +402,8 @@ class InfoIHMJoin:
         df.data_registro_ihm = df.data_registro_ihm.fillna(df.data_registro)
         df.hora_registro_ihm = df.hora_registro_ihm.fillna(df.hora_registro)
 
-        # Ajusta afeta_eff para ser um inteiro
-        df.afeta_eff = df.afeta_eff.fillna(0).astype(int)  # NOTE - Adicionado para testes
+        # REVIEW Ajusta afeta_eff para ser um inteiro
+        df.afeta_eff = df.afeta_eff.fillna(0).astype(int)
 
         return df
 
@@ -558,8 +557,8 @@ class ProductionIndicators:
         # Caso o desconto seja maior que o tempo, o desconto deve ser igual ao tempo
         df.loc[:, "desconto"] = df[["desconto", "tempo"]].min(axis=1)
 
-        # Lidar com o afeta_eff
-        mask = df.afeta_eff == 1  # NOTE - Mudança para uso da flag afeta_eff
+        # REVIEW Lidar com o afeta_eff
+        mask = df.afeta_eff == 1
         df.loc[mask, "desconto"] = df.loc[mask, "tempo"]
 
         # Calcula o excedente, sendo o valor mínimo 0
