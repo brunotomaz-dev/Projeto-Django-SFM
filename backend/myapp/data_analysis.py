@@ -283,7 +283,10 @@ class InfoIHMJoin:
 
         # Identifica mudanças
         mask = (df.motivo.ne(df.motivo.shift()) & df.motivo.notnull()) | (
-            df.causa.ne(df.causa.shift()) & df.causa.notnull()
+            (df.causa.ne(df.causa.shift()) & df.causa.notnull())
+            | (
+                df.afeta_eff.ne(df.afeta_eff.shift())
+            )  # REVIEW - Adicionado verificação de afeta_eff
         )
 
         # Cria a coluna motivo_change
