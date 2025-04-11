@@ -97,7 +97,7 @@ def _save_processed_data(dados_processados):
             InfoIHM.objects.update_or_create(  # pylint: disable=no-member
                 maquina_id=dado["maquina_id"],
                 data_registro=dado["data_registro"],
-                hora_registro=dado["hora_registro"],
+                hora_registro_ihm=dado["hora_registro_ihm"],
                 defaults=dado,
             )
 
