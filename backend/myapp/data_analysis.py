@@ -286,6 +286,10 @@ class InfoIHMJoin:
         mask = (df.motivo.ne(df.motivo.shift()) & df.motivo.notnull()) | (
             (df.causa.ne(df.causa.shift()) & df.causa.notnull())
             | (df.afeta_eff.ne(df.afeta_eff.shift()))
+            | (
+                df.hora_registro_ihm.ne(df.hora_registro_ihm.shift())
+                & df.hora_registro_ihm.notnull()
+            )  # Adicionado para corrigir problema no DB
         )
 
         # Cria a coluna motivo_change
