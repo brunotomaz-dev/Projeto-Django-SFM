@@ -30,13 +30,16 @@
     "notna",
     "NRRPET",
     "paes",
+    "postgresql",
     "producao",
     "qualidadeihm",
     "recno",
+    "serviceorder",
     "simplejwt",
     "sqlserver",
     "TOTVSDB",
-    "viewsets"
+    "viewsets",
+    "worktime"
   ],
   "sqltools.connections": [
     {

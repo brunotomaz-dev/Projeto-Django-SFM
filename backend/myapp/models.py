@@ -1,6 +1,8 @@
 """Módulo de criação de modelos do Django"""
 
 # cSpell:ignore usuario panificacao lideranca descricao contencao solucao responsavel conclusao
+# cSpell: words classificacao codigo localizacao nivel segundario solicitacao seguranca maint reqs
+# cSpell: words manutencao criacao historico servico
 from django.db import models
 
 
@@ -310,3 +312,66 @@ class ActionPlan(models.Model):
 
         db_table = "analysis_actionPlan"
         indexes = [models.Index(fields=["data_registro", "conclusao"])]
+
+
+class ServiceRequest(models.Model):
+    """Tabela de Solicitação de Serviço (Foreign Table do PostgreSQL)"""
+
+    id = models.AutoField(primary_key=True)
+    req_number = models.CharField(max_length=20)
+    maint_req_status_id = models.IntegerField()
+    solicitation = models.TextField()
+    requestor = models.CharField(max_length=100)
+    classification = models.IntegerField()
+    created_at = models.DateTimeField()
+    maint_subject_id = models.IntegerField(null=True)
+    maint_subject_child_id = models.IntegerField(null=True)
+    first_loc_id = models.IntegerField(null=True)
+    second_loc_id = models.IntegerField(null=True)
+    third_loc_id = models.IntegerField(null=True)
+    asset_id = models.IntegerField(null=True)
+    is_asset_stopped = models.BooleanField(default=False)
+    is_security_item = models.BooleanField(default=False)
+
+    class Meta:
+        """Definição do nome da tabela"""
+
+        managed = False  # Como é uma Foreign Table, Django não gerencia a estrutura
+        db_table = "maint_reqs"
+
+    def __str__(self):
+        return f"SS {self.req_number} - {self.requestor} - {self.solicitation}"
+
+
+class ServiceOrder(models.Model):
+    """Tabela de Ordem de Serviço (Foreign Table do PostgreSQL)"""
+
+    id = models.AutoField(primary_key=True)
+    order_number = models.CharField(max_length=20)
+    maint_order_status_id = models.IntegerField()
+    description = models.TextField()
+    priority = models.FloatField()
+    priority_calculated = models.FloatField()
+    created_at = models.DateTimeField()
+    user_text = models.CharField(max_length=100)
+    maint_service_type_id = models.IntegerField()
+    maint_service_nature_id = models.IntegerField()
+    employee_id = models.IntegerField(null=True)
+    area_id = models.IntegerField()
+    first_loc_id = models.IntegerField(null=True)
+    second_loc_id = models.IntegerField(null=True)
+    third_loc_id = models.IntegerField(null=True)
+    asset_id = models.IntegerField(null=True)
+    maint_req_id = models.IntegerField(null=True)
+    estimated_worktime = models.FloatField(default=0)
+    performed_worktime = models.FloatField(default=0)
+    executed_service_historic = models.TextField(null=True)
+
+    class Meta:
+        """Definição do nome da tabela"""
+
+        managed = False  # Como é uma Foreign Table, Django não gerencia a estrutura
+        db_table = "maint_orders"
+
+    def __str__(self):
+        return f"OS {self.order_number} - Status: {self.maint_order_status_id}"

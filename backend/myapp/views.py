@@ -1,9 +1,11 @@
 """Módulo de visualizações do Django Rest Framework"""
 
 import logging
+import traceback
 
 import numpy as np
 import pandas as pd
+from django.core.cache import cache
 from django.db import connections
 
 # from django.shortcuts import render
@@ -30,6 +32,8 @@ from .filters import (
     QualidadeIHMFilter,
     QualProdFilter,
     RepairFilter,
+    ServiceOrderFilter,
+    ServiceRequestFilter,
 )
 from .models import (
     AbsenceLog,
@@ -43,6 +47,8 @@ from .models import (
     QualidadeIHM,
     QualProd,
     Repair,
+    ServiceOrder,
+    ServiceRequest,
 )
 from .permissions import HomeAccessPermission
 from .serializers import (
@@ -60,6 +66,8 @@ from .serializers import (
     QualProdSerializer,
     RegisterSerializer,
     RepairSerializer,
+    ServiceOrderSerializer,
+    ServiceRequestSerializer,
 )
 from .views_processor import ProductionDataProcessor, QualidadeDataProcessor
 
@@ -105,6 +113,19 @@ class RegisterView(generics.CreateAPIView):
 
 class BasicDynamicFieldsViewSets(viewsets.ModelViewSet):
     """ViewSet básico com suporte a campos dinâmicos"""
+
+    def get_serializer(self, *args, **kwargs):
+        # Recupera os campos dinâmicos da query string
+        fields = self.request.query_params.get("fields", None)
+
+        # Se houver campos dinâmicos, passa-os para o serializador
+        kwargs["fields"] = fields.split(",") if fields else None
+
+        return super().get_serializer(*args, **kwargs)
+
+
+class ReadOnlyDynamicFieldsViewSets(viewsets.ReadOnlyModelViewSet):
+    """ViewSet somente leitura com suporte a campos dinâmicos"""
 
     def get_serializer(self, *args, **kwargs):
         # Recupera os campos dinâmicos da query string
@@ -1028,3 +1049,448 @@ class CartCountViewSet(APIView):
             return Response(
                 {"error": f"Database error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
+    """
+    ViewSet para lidar com ordens de serviço.
+
+    Este ViewSet executa uma query personalizada com JOIN, mantendo suporte
+    a filtros e campos dinâmicos.
+    """
+
+    queryset = ServiceOrder.objects.all()  # pylint: disable=E1101
+    serializer_class = ServiceOrderSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ServiceOrderFilter
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def _get_cache_key(self, request):
+        """Gera uma chave de cache baseada nos parâmetros da requisição."""
+        cache_params = request.query_params.copy()
+        return f"service_orders:{hash(frozenset(cache_params.items()))}"
+
+    def _add_date_filter(self, param_name, field_name, where_clauses, params, request):
+        """Adiciona um filtro de data se o parâmetro estiver presente."""
+        if param_name in request.query_params:
+            param_value = request.query_params.get(param_name)
+            if param_value:
+                where_clauses.append(f"{field_name} >= %s")
+                params.append(param_value)
+        return where_clauses, params
+
+    def _add_equality_filter(self, param_name, field_name, where_clauses, params, request):
+        """Adiciona um filtro de igualdade se o parâmetro estiver presente."""
+        if param_name in request.query_params:
+            param_value = request.query_params.get(param_name)
+            if param_value:
+                where_clauses.append(f"{field_name} = %s")
+                params.append(param_value)
+        return where_clauses, params
+
+    def _build_filter_clauses(self, request):
+        """Constrói as cláusulas de filtro com base nos parâmetros da requisição."""
+        where_clauses = []
+        params = []
+
+        # Adiciona filtros específicos
+        self._add_date_filter(
+            "data_criacao__gt", "DATE(mo.created_at)", where_clauses, params, request
+        )
+        self._add_equality_filter(
+            "status_id", "mo.maint_order_status_id", where_clauses, params, request
+        )
+        self._add_equality_filter("numero_os", "mo.order_number", where_clauses, params, request)
+
+        return where_clauses, params
+
+    def _process_query_results(self, cursor, results):
+        """Processa os resultados da query e retorna como uma lista de dicionários."""
+        columns = [col[0] for col in cursor.description]
+        data = []
+        for row in results:
+            item = {}
+            for i, col in enumerate(columns):
+                item[col] = row[i]
+            data.append(item)
+        return data
+
+    def _get_cached_response(self, request):
+        """Tenta obter e retornar dados do cache."""
+        cache_key = self._get_cache_key(request)
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+        return None
+
+    def _build_complete_query(self, request):
+        """Constrói a query completa com filtros e ordenação."""
+        # Construa a query base
+        query = self.__build_query()
+
+        # Adicione filtros
+        where_clauses, params = self._build_filter_clauses(request)
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+
+        # Adicione ordenação e limite
+        query += " ORDER BY mo.created_at DESC LIMIT 100"
+
+        return query, params
+
+    def _execute_query_and_cache(self, query, params, request):
+        """Executa a query e armazena os resultados no cache."""
+        with connections["postgres"].cursor() as cursor:
+            # Execute a query
+            cursor.execute(query, params)
+
+            # Verifique se há resultados válidos
+            if cursor.description is None:
+                return Response([])
+
+            results = cursor.fetchall()
+            if not results:
+                return Response([])
+
+            # Processe os resultados
+            data = self._process_query_results(cursor, results)
+
+            # Armazene no cache
+            cache_key = self._get_cache_key(request)
+            cache.set(cache_key, data, 300)
+
+            return Response(data)
+
+    def _handle_query_error(self, e):
+        """Lida com os erros de execução da query."""
+
+        traceback_str = traceback.format_exc()
+        print(f"Erro detalhado:\n{traceback_str}")
+        return Response(
+            {"error": f"Database error: {str(e)}", "traceback": traceback_str},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    def list(self, request, *args, **kwargs):
+        """Implementação otimizada com cache de plano e resultados."""
+        # Tente obter do cache primeiro
+        cached_response = self._get_cached_response(request)
+        if cached_response:
+            return cached_response
+
+        # Construa a query completa
+        query, params = self._build_complete_query(request)
+
+        try:
+            # Execute a query e cache os resultados
+            return self._execute_query_and_cache(query, params, request)
+        except Exception as e:  # pylint: disable=W0718
+            return self._handle_query_error(e)
+
+    def __build_query(self):
+        """
+        Constrói a consulta SQL personalizada para obter as ordens de serviço.
+
+        Retorna:
+            str: Consulta SQL personalizada
+        """
+
+        # cSpell: words codigo localizacao descricao nivel matype matnat maint manutencao
+        # cSpell: words secundario criacao responsavel worktime historico servico reqs
+
+        # Select
+        select_ = """
+            SELECT
+                mo.id,
+                mo.order_number AS numero_os,
+                l1.code AS codigo_localizacao_nivel1,
+                l1.description AS descricao_localizacao_nivel1,
+                l2.code AS codigo_localizacao_nivel2,
+                l2.description AS descricao_localizacao_nivel2,
+                l3.code AS codigo_localizacao_nivel3,
+                l3.description AS descricao_localizacao_nivel3,
+                ass.code as codigo_ativo,
+                ass.description AS ativo,
+                matype.description AS tipo_manutencao,
+                matnat.description as natureza_manutencao,
+                mo.maint_req_id AS numero_ss,
+                ss.requestor AS solicitante_ss,
+                mst.description AS assunto_principal,
+                mst1.description AS assunto_secundario,
+                mo.description AS descricao,
+                mo.maint_order_status_id as status_id,
+                st.description AS status,
+                mo.priority AS prioridade,
+                mo.priority_calculated AS prioridade_calculada,
+                mo.created_at AS data_criacao,
+                mo.user_text AS criado_por,
+                ep.name AS responsavel_manutencao,
+                mo.performed_worktime AS tempo_trabalho_realizado,
+                mo.estimated_worktime AS tempo_estimado_trabalho,
+                mo.executed_service_historic AS historico_servico_executado
+        """
+
+        # From
+        from_ = "FROM maint_orders AS mo"
+
+        # Join
+        join_ = """
+            JOIN areas AS ar
+                ON mo.area_id = ar.id
+            LEFT JOIN locations AS l1
+                ON mo.first_loc_id = l1.id
+            LEFT JOIN locations AS l2
+                ON mo.second_loc_id = l2.id
+            LEFT JOIN locations AS l3
+                ON mo.third_loc_id = l3.id
+            LEFT JOIN assets AS ass
+                ON mo.asset_id = ass.id
+            JOIN maint_service_type_translations AS matype
+                ON mo.maint_service_type_id = matype.maint_service_type_id
+                AND matype.locale = 'pt-BR'
+            JOIN maint_service_nature_translations AS matnat
+                ON mo.maint_service_nature_id = matnat.maint_service_nature_id
+                AND matype.locale = 'pt-BR'
+            LEFT JOIN employees AS ep
+                ON mo.employee_id = ep.id
+            JOIN maint_order_status_translations AS st
+                ON mo.maint_order_status_id = st.maint_order_status_id
+                AND st.locale = 'pt-BR'
+            LEFT JOIN maint_reqs AS ss
+                ON mo.maint_req_id = ss.id
+            LEFT JOIN maint_subject_translations AS mst
+                ON ss.maint_subject_id = mst.maint_subject_id
+                AND mst.locale = 'pt-BR'
+            LEFT JOIN maint_subject_translations AS mst1
+                ON ss.maint_subject_child_id = mst1.maint_subject_id
+                AND mst1.locale = 'pt-BR'
+        """
+
+        query = select_ + from_ + join_
+
+        return query
+
+    def get_serializer(self, *args, **kwargs):
+        """
+        Sobrescreve o método get_serializer para permitir selecionar campos específicos,
+        incluindo os que foram adicionados pelos JOINs.
+        """
+        # Recupera os campos dinâmicos da query string
+        fields = self.request.query_params.get("fields", None)
+
+        # Se houver campos dinâmicos, passa-os para o serializador
+        kwargs["fields"] = fields.split(",") if fields else None
+
+        return super().get_serializer(*args, **kwargs)
+
+
+class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
+    """
+    ViewSet para lidar com requisições de serviço.
+
+    Este ViewSet executa uma query personalizada com JOIN, mantendo suporte
+    a filtros e campos dinâmicos.
+    """
+
+    queryset = ServiceRequest.objects.all()  # pylint: disable=E1101
+    serializer_class = ServiceRequestSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ServiceRequestFilter
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def _get_cache_key(self, request):
+        """Gera uma chave de cache baseada nos parâmetros da requisição."""
+        cache_params = request.query_params.copy()
+        return f"service_requests:{hash(frozenset(cache_params.items()))}"
+
+    def _add_date_filter(self, param_name, field_name, where_clauses, params, request):
+        """Adiciona um filtro de data se o parâmetro estiver presente."""
+        if param_name in request.query_params:
+            param_value = request.query_params.get(param_name)
+            if param_value:
+                where_clauses.append(f"{field_name} >= %s")
+                params.append(param_value)
+        return where_clauses, params
+
+    def _add_equality_filter(self, param_name, field_name, where_clauses, params, request):
+        """Adiciona um filtro de igualdade se o parâmetro estiver presente."""
+        if param_name in request.query_params:
+            param_value = request.query_params.get(param_name)
+            if param_value:
+                where_clauses.append(f"{field_name} = %s")
+                params.append(param_value)
+        return where_clauses, params
+
+    def _build_filter_clauses(self, request):
+        """Constrói as cláusulas de filtro com base nos parâmetros da requisição."""
+        where_clauses = []
+        params = []
+
+        # Adiciona filtros específicos
+        self._add_date_filter(
+            "data_criacao__gt", "DATE(ss.created_at)", where_clauses, params, request
+        )
+        self._add_equality_filter(
+            "status_id", "ss.maint_req_status_id", where_clauses, params, request
+        )
+        self._add_equality_filter("numero_ss", "ss.req_number", where_clauses, params, request)
+
+        return where_clauses, params
+
+    def _process_query_results(self, cursor, results):
+        """Processa os resultados da query e retorna como uma lista de dicionários."""
+        columns = [col[0] for col in cursor.description]
+        data = []
+        for row in results:
+            item = {}
+            for i, col in enumerate(columns):
+                item[col] = row[i]
+            data.append(item)
+        return data
+
+    def _get_cached_response(self, request):
+        """Tenta obter e retornar dados do cache."""
+        cache_key = self._get_cache_key(request)
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+        return None
+
+    def _build_complete_query(self, request):
+        """Constrói a query completa com filtros e ordenação."""
+        # Construa a query base
+        query = self.__build_query()
+
+        # Adicione filtros
+        where_clauses, params = self._build_filter_clauses(request)
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+
+        # Adicione ordenação e limite
+        query += " ORDER BY ss.created_at DESC LIMIT 100"
+
+        return query, params
+
+    def _execute_query_and_cache(self, query, params, request):
+        """Executa a query e armazena os resultados no cache."""
+        with connections["postgres"].cursor() as cursor:
+            # Execute a query
+            cursor.execute(query, params)
+
+            # Verifique se há resultados válidos
+            if cursor.description is None:
+                return Response([])
+
+            results = cursor.fetchall()
+            if not results:
+                return Response([])
+
+            # Processe os resultados
+            data = self._process_query_results(cursor, results)
+
+            # Armazene no cache
+            cache_key = self._get_cache_key(request)
+            cache.set(cache_key, data, 300)
+
+            return Response(data)
+
+    def _handle_query_error(self, e):
+        """Lida com os erros de execução da query."""
+        traceback_str = traceback.format_exc()
+        print(f"Erro detalhado:\n{traceback_str}")
+        return Response(
+            {"error": f"Database error: {str(e)}", "traceback": traceback_str},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    def list(self, request, *args, **kwargs):
+        """Implementação otimizada com cache de plano e resultados."""
+        # Tente obter do cache primeiro
+        cached_response = self._get_cached_response(request)
+        if cached_response:
+            return cached_response
+
+        # Construa a query completa
+        query, params = self._build_complete_query(request)
+
+        try:
+            # Execute a query e cache os resultados
+            return self._execute_query_and_cache(query, params, request)
+        except Exception as e:  # pylint: disable=W0718
+            return self._handle_query_error(e)
+
+    def __build_query(self):
+        """
+        Constrói a consulta SQL personalizada para obter as requisições de serviço.
+
+        Retorna:
+            str: Consulta SQL personalizada
+        """
+
+        # cSpell: words classificacao segundario solicitacao seguranca
+
+        # Select
+        select_ = """
+            SELECT
+                ss.id
+                , ss.requestor as solicitante
+                , mst.description as assunto_principal
+                , mst1.description as assunto_segundario
+                , ss.solicitation as solicitacao
+                , ss.maint_req_status_id as status_id
+                , rs.description as status
+                , l1.code AS codigo_localizacao_nivel1
+                , l1.description AS descricao_localizacao_nivel1
+                , l2.code AS codigo_localizacao_nivel2
+                , l2.description AS descricao_localizacao_nivel2
+                , l3.code AS codigo_localizacao_nivel3
+                , l3.description AS descricao_localizacao_nivel3
+                , ass.code as codigo_ativo
+                , ass.description AS ativo
+                , ss.classification as classificacao
+                , ss.created_at as data_criacao
+                , ss.req_number as numero_ss
+                , ss.is_asset_stopped as maquina_esta_parada
+                , ss.is_security_item as item_de_seguranca
+            """
+
+        # From
+        from_ = "FROM maint_reqs as ss"
+
+        # Join
+        join_ = """
+            LEFT JOIN maint_subject_translations AS mst
+                ON ss.maint_subject_id = mst.maint_subject_id
+                AND mst.locale = 'pt-BR'
+            LEFT JOIN maint_subject_translations AS mst1
+                ON ss.maint_subject_child_id = mst1.maint_subject_id
+                AND mst1.locale = 'pt-BR'
+            LEFT JOIN maint_req_status_translations AS rs
+                ON ss.maint_req_status_id = rs.maint_req_status_id
+                AND rs.locale = 'pt-BR'
+            LEFT JOIN locations AS l1
+                ON ss.first_loc_id = l1.id
+            LEFT JOIN locations AS l2
+                ON ss.second_loc_id = l2.id
+            LEFT JOIN locations AS l3
+                ON ss.third_loc_id = l3.id
+            LEFT JOIN assets AS ass
+                ON ss.asset_id = ass.id
+        """
+
+        return select_ + from_ + join_
+
+    def get_serializer(self, *args, **kwargs):
+        """
+        Sobrescreve o método get_serializer para permitir selecionar campos específicos,
+        incluindo os que foram adicionados pelos JOINs.
+        """
+        # Recupera os campos dinâmicos da query string
+        fields = self.request.query_params.get("fields", None)
+
+        # Se houver campos dinâmicos, passa-os para o serializador
+        kwargs["fields"] = fields.split(",") if fields else None
+
+        return super().get_serializer(*args, **kwargs)

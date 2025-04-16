@@ -19,6 +19,8 @@ from .models import (
     QualidadeIHM,
     QualProd,
     Repair,
+    ServiceOrder,
+    ServiceRequest,
 )
 
 
@@ -235,4 +237,24 @@ class ActionPlanSerializer(DynamicFieldsModelSerializer):
         """Classe de Metadados"""
 
         model = ActionPlan
+        fields = "__all__"
+
+
+class ServiceOrderSerializer(DynamicFieldsModelSerializer):
+    """Serializador de dados de ordem de serviço"""
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = ServiceOrder
+        fields = "__all__"
+
+
+class ServiceRequestSerializer(DynamicFieldsModelSerializer):
+    """Serializador de dados de requisição de serviço"""
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = ServiceRequest
         fields = "__all__"

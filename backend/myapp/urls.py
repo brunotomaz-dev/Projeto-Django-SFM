@@ -24,6 +24,8 @@ from .views import (
     QualProdViewSet,
     RegisterView,
     RepairViewSet,
+    ServiceOrderViewSet,
+    ServiceRequestViewSet,
     StockOnCFViewSet,
     StockStatusViewSet,
     change_password,
@@ -42,6 +44,8 @@ router.register(r"absenteismo", AbsenceViewSet)  # cSpell: words absenteismo
 router.register(r"maq_info_hour_prod", MaqInfoHourProductionViewSet, basename="maq_info_hour_prod")
 router.register(r"presence_log", PresenceLogViewSet)
 router.register(r"action_plan", ActionPlanViewSet)
+router.register(r"service_order", ServiceOrderViewSet)
+router.register(r"service_request", ServiceRequestViewSet)
 
 
 urlpatterns = [

@@ -1,10 +1,13 @@
 """Módulo de roteadores do Django para tabelas específicas"""
 
+# cSpell: words maint reqs
+
 
 class SpecificTablesRouter:
     """Roteador para tabelas específicas"""
 
-    specific_tables = [
+    # Sql Server para leitura e escrita
+    sqlserver_tables = [
         "maquina_info",
         "maquina_cadastro",
         "maquina_ihm",
@@ -17,7 +20,13 @@ class SpecificTablesRouter:
         "analysis_absent",
         "analysis_presence",
         "analysis_actionPlan",
-    ]  # Adicione aqui as tabelas específicas
+    ]
+
+    # Foreign tables do PostgreSQL para manutenção - não pode ser alterado
+    postgres_tables = [
+        "maint_orders",
+        "maint_reqs",
+    ]
 
     def db_for_read(self, model, **hints):  # pylint: disable=unused-argument
         """Define quais bancos devem ser usados para ler as tabelas.
@@ -27,8 +36,10 @@ class SpecificTablesRouter:
         """
 
         # pylint: disable=protected-access
-        if model._meta.db_table in self.specific_tables:
+        if model._meta.db_table in self.sqlserver_tables:
             return "sqlserver"  # SQL Server
+        elif model._meta.db_table in self.postgres_tables:
+            return "postgres"  # PostgreSQL
         return None
 
     # pylint: disable=unused-argument
@@ -40,8 +51,10 @@ class SpecificTablesRouter:
         """
 
         # pylint: disable=protected-access
-        if model._meta.db_table in self.specific_tables:
+        if model._meta.db_table in self.sqlserver_tables:
             return "sqlserver"  # SQL Server
+        elif model._meta.db_table in self.postgres_tables:
+            return None
         return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
@@ -52,6 +65,8 @@ class SpecificTablesRouter:
         """
         if db == "default":
             return True
-        if model_name in self.specific_tables:
+        if model_name in self.sqlserver_tables:
             return db == "sqlserver"
+        elif model_name in self.postgres_tables:
+            return db == "postgres"  # PostgreSQL
         return None

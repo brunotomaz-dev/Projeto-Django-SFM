@@ -8,6 +8,7 @@ from django.contrib import admin
 
 from .models import (
     AbsenceLog,
+    ActionPlan,
     Eficiencia,
     InfoIHM,
     MaquinaIHM,
@@ -17,6 +18,8 @@ from .models import (
     QualidadeIHM,
     QualProd,
     Repair,
+    ServiceOrder,
+    ServiceRequest,
 )
 
 # Register your models here.
@@ -31,3 +34,6 @@ admin.site.register(Performance)
 admin.site.register(Repair)
 admin.site.register(AbsenceLog)
 admin.site.register(PresenceLog)
+admin.site.register(ActionPlan)
+admin.site.register(ServiceOrder)
+admin.site.register(ServiceRequest)

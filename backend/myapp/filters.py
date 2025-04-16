@@ -1,6 +1,6 @@
 """Módulo com os filtros do Django Rest Framework"""
 
-# cSpell: words conclusao
+# cSpell: words conclusao criacao
 
 import django_filters
 
@@ -16,6 +16,8 @@ from .models import (
     QualidadeIHM,
     QualProd,
     Repair,
+    ServiceOrder,
+    ServiceRequest,
 )
 
 
@@ -218,4 +220,40 @@ class ActionPlanFilter(django_filters.FilterSet):
         fields = {
             "data_registro": ["exact", "gt", "lt", "gte", "lte"],
             "conclusao": ["exact"],
+        }
+
+
+class ServiceOrderFilter(django_filters.FilterSet):
+    """Filtro para registros de presença"""
+
+    created_at = django_filters.DateFilter(field_name="created_at")
+    maint_order_status_id = django_filters.NumberFilter(lookup_expr="exact")
+    order_number = django_filters.CharFilter(lookup_expr="exact")
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = ServiceOrder
+        fields = {
+            "created_at": ["exact", "gt", "lt", "gte", "lte"],
+            "maint_order_status_id": ["exact"],
+            "order_number": ["exact"],
+        }
+
+
+class ServiceRequestFilter(django_filters.FilterSet):
+    """Filtro para registros de presença"""
+
+    created_at = django_filters.DateFilter(field_name="created_at")
+    maint_req_status_id = django_filters.NumberFilter(lookup_expr="exact")
+    req_number = django_filters.CharFilter(lookup_expr="exact")
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = ServiceRequest
+        fields = {
+            "created_at": ["exact", "gt", "lt", "gte", "lte"],
+            "maint_req_status_id": ["exact"],
+            "req_number": ["exact"],
         }
