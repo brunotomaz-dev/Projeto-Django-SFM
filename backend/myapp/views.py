@@ -1075,11 +1075,53 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         return f"service_orders:{hash(frozenset(cache_params.items()))}"
 
     def _add_date_filter(self, param_name, field_name, where_clauses, params, request):
-        """Adiciona um filtro de data se o parâmetro estiver presente."""
+        """
+        Adiciona um filtro de data maior ou igual, ajustando para o fuso horário brasileiro (UTC-3).
+
+        Parâmetros:
+        - param_name: Nome do parâmetro na URL (ex: 'data_criacao__gt')
+        - field_name: Nome do campo no banco de dados (ex: 'mo.created_at')
+        - where_clauses: Lista de cláusulas WHERE
+        - params: Lista de parâmetros para a query
+        - request: Objeto de requisição
+        """
         if param_name in request.query_params:
             param_value = request.query_params.get(param_name)
             if param_value:
-                where_clauses.append(f"{field_name} >= %s")
+                # Ajusta para o timezone brasileiro (UTC-3)
+                where_clauses.append(
+                    f"({field_name} AT TIME ZONE 'UTC' "
+                    f"AT TIME ZONE 'America/Sao_Paulo')::date >= %s::date"
+                )
+                params.append(param_value)
+
+        # Filtro para data_criacao__lt (menor ou igual)
+        # Adicionamos esta condição para completude dos filtros
+        if "data_criacao__lt" in request.query_params:
+            param_value = request.query_params.get("data_criacao__lt")
+            where_clauses.append(
+                f"({field_name} AT TIME ZONE 'UTC' "
+                f"AT TIME ZONE 'America/Sao_Paulo')::date <= %s::date"
+            )
+            params.append(param_value)
+
+        return where_clauses, params
+
+    def _add_date_equal_filter(self, param_name, field_name, where_clauses, params, request):
+        """
+        Adiciona um filtro de data igual, considerando o dia completo no fuso horário brasileiro.
+
+        Para um filtro de igualdade em datas, precisamos considerar que a data é armazenada com
+        timezone UTC, mas queremos filtrar pelo dia local (UTC-3).
+        """
+        if param_name in request.query_params:
+            param_value = request.query_params.get(param_name)
+            if param_value:
+                # Para DATE(X) = Y, precisamos considerar que o dia em UTC pode ser
+                where_clauses.append(
+                    f"({field_name} AT TIME ZONE 'UTC' "
+                    f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date"
+                )
                 params.append(param_value)
         return where_clauses, params
 
@@ -1097,13 +1139,19 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         where_clauses = []
         params = []
 
-        # Adiciona filtros específicos
+        # Filtro para data_criacao (igualdade - filtro por dia específico no timezone local)
+        self._add_date_equal_filter("data_criacao", "mo.created_at", where_clauses, params, request)
+
+        # Filtro para data_criacao__gt (maior ou igual)
         self._add_date_filter(
             "data_criacao__gt", "DATE(mo.created_at)", where_clauses, params, request
         )
+
+        # Outros filtros existentes
         self._add_equality_filter(
             "status_id", "mo.maint_order_status_id", where_clauses, params, request
         )
+
         self._add_equality_filter("numero_os", "mo.order_number", where_clauses, params, request)
 
         return where_clauses, params
@@ -1309,11 +1357,53 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
         return f"service_requests:{hash(frozenset(cache_params.items()))}"
 
     def _add_date_filter(self, param_name, field_name, where_clauses, params, request):
-        """Adiciona um filtro de data se o parâmetro estiver presente."""
+        """
+        Adiciona um filtro de data maior ou igual, ajustando para o fuso horário brasileiro (UTC-3).
+
+        Parâmetros:
+        - param_name: Nome do parâmetro na URL (ex: 'data_criacao__gt')
+        - field_name: Nome do campo no banco de dados (ex: 'mo.created_at')
+        - where_clauses: Lista de cláusulas WHERE
+        - params: Lista de parâmetros para a query
+        - request: Objeto de requisição
+        """
         if param_name in request.query_params:
             param_value = request.query_params.get(param_name)
             if param_value:
-                where_clauses.append(f"{field_name} >= %s")
+                # Ajusta para o timezone brasileiro (UTC-3)
+                where_clauses.append(
+                    f"({field_name} AT TIME ZONE 'UTC' "
+                    f"AT TIME ZONE 'America/Sao_Paulo')::date >= %s::date"
+                )
+                params.append(param_value)
+
+        # Filtro para data_criacao__lt (menor ou igual)
+        # Adicionamos esta condição para completude dos filtros
+        if "data_criacao__lt" in request.query_params:
+            param_value = request.query_params.get("data_criacao__lt")
+            where_clauses.append(
+                f"({field_name} AT TIME ZONE 'UTC' "
+                f"AT TIME ZONE 'America/Sao_Paulo')::date <= %s::date"
+            )
+            params.append(param_value)
+
+        return where_clauses, params
+
+    def _add_date_equal_filter(self, param_name, field_name, where_clauses, params, request):
+        """
+        Adiciona um filtro de data igual, considerando o dia completo no fuso horário brasileiro.
+
+        Para um filtro de igualdade em datas, precisamos considerar que a data é armazenada com
+        timezone UTC, mas queremos filtrar pelo dia local (UTC-3).
+        """
+        if param_name in request.query_params:
+            param_value = request.query_params.get(param_name)
+            if param_value:
+                # Para DATE(X) = Y, precisamos considerar que o dia em UTC pode ser
+                where_clauses.append(
+                    f"({field_name} AT TIME ZONE 'UTC' "
+                    f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date"
+                )
                 params.append(param_value)
         return where_clauses, params
 
@@ -1331,14 +1421,20 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
         where_clauses = []
         params = []
 
-        # Adiciona filtros específicos
+        # Filtro para data_criacao (igualdade - filtro por dia específico no timezone local)
+        self._add_date_equal_filter("data_criacao", "ss.created_at", where_clauses, params, request)
+
+        # Filtro para data_criacao__gt (maior ou igual)
         self._add_date_filter(
             "data_criacao__gt", "DATE(ss.created_at)", where_clauses, params, request
         )
+
+        # Outros filtros existentes
         self._add_equality_filter(
-            "status_id", "ss.maint_req_status_id", where_clauses, params, request
+            "status_id", "ss.maint_order_status_id", where_clauses, params, request
         )
-        self._add_equality_filter("numero_ss", "ss.req_number", where_clauses, params, request)
+
+        self._add_equality_filter("numero_ss", "ss.order_number", where_clauses, params, request)
 
         return where_clauses, params
 
