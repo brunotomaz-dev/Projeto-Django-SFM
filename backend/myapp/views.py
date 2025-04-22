@@ -1432,7 +1432,7 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
             str: Consulta SQL personalizada
         """
 
-        # cSpell: words classificacao segundario solicitacao seguranca
+        # cSpell: words classificacao secundario solicitacao seguranca
 
         # Select
         select_ = """
@@ -1440,7 +1440,7 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
                 ss.id
                 , ss.requestor as solicitante
                 , mst.description as assunto_principal
-                , mst1.description as assunto_segundario
+                , mst1.description as assunto_secundario
                 , ss.solicitation as solicitacao
                 , ss.maint_req_status_id as status_id
                 , rs.description as status

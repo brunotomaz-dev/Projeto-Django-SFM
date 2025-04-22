@@ -1,8 +1,7 @@
 """Módulo de criação de modelos do Django"""
 
 # cSpell:ignore usuario panificacao lideranca descricao contencao solucao responsavel conclusao
-# cSpell: words classificacao codigo localizacao nivel segundario solicitacao seguranca maint reqs
-# cSpell: words manutencao criacao historico servico
+# cSpell: words maint reqs
 from django.db import models
 
 
