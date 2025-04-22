@@ -1431,10 +1431,10 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
 
         # Outros filtros existentes
         self._add_equality_filter(
-            "status_id", "ss.maint_order_status_id", where_clauses, params, request
+            "status_id", "ss.maint_req_status_id", where_clauses, params, request
         )
 
-        self._add_equality_filter("numero_ss", "ss.order_number", where_clauses, params, request)
+        self._add_equality_filter("numero_ss", "ss.req_number", where_clauses, params, request)
 
         return where_clauses, params
 
