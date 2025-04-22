@@ -1051,6 +1051,9 @@ class CartCountViewSet(APIView):
             )
 
 
+# ================================================================================================ #
+#                                              MANUSIS                                             #
+# ================================================================================================ #
 class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
     """
     ViewSet para lidar com ordens de serviço.
