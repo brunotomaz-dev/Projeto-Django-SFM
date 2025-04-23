@@ -1116,13 +1116,29 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         """
         if param_name in request.query_params:
             param_value = request.query_params.get(param_name)
-            if param_value:
-                # Para DATE(X) = Y, precisamos considerar que o dia em UTC pode ser
-                where_clauses.append(
-                    f"({field_name} AT TIME ZONE 'UTC' "
-                    f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date"
-                )
-                params.append(param_value)
+
+            if param_name == "inicio_atendimento":
+                if param_value:
+                    where_clauses.append(
+                        f"(({field_name} AT TIME ZONE 'UTC' "
+                        f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date "
+                        f"OR (mo.maint_finished_at AT TIME ZONE 'UTC' "  # Corrigido
+                        f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date "
+                        # f"OR (mo.updated_at AT TIME ZONE 'UTC' "  # Corrigido
+                        # f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date)"
+                    )
+                    # Precisa adicionar o mesmo valor três vezes, uma para cada condição
+                    params.append(param_value)
+                    params.append(param_value)
+                    params.append(param_value)
+            else:
+                if param_value:
+                    # Para DATE(X) = Y, precisamos considerar que o dia em UTC pode ser
+                    where_clauses.append(
+                        f"({field_name} AT TIME ZONE 'UTC' "
+                        f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date"
+                    )
+                    params.append(param_value)
         return where_clauses, params
 
     def _add_equality_filter(self, param_name, field_name, where_clauses, params, request):
