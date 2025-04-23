@@ -1123,7 +1123,7 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
                         f"(({field_name} AT TIME ZONE 'UTC' "
                         f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date "
                         f"OR (mo.maint_finished_at AT TIME ZONE 'UTC' "  # Corrigido
-                        f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date "
+                        f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date)"
                         # f"OR (mo.updated_at AT TIME ZONE 'UTC' "  # Corrigido
                         # f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date)"
                     )
