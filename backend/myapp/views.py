@@ -1141,6 +1141,9 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
 
         # Filtro para data_criacao (igualdade - filtro por dia específico no timezone local)
         self._add_date_equal_filter("data_criacao", "mo.created_at", where_clauses, params, request)
+        self._add_date_equal_filter(
+            "data_conclusao", "mo.closed_at", where_clauses, params, request
+        )
 
         # Filtro para data_criacao__gt (maior ou igual)
         self._add_date_filter(
@@ -1277,8 +1280,11 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
                 mo.created_at AS data_criacao,
                 mo.user_text AS criado_por,
                 ep.name AS responsavel_manutencao,
+                mo.maint_started_at AS inicio_atendimento,
+                mo.maint_finished_at AS fim_atendimento,
                 mo.performed_worktime AS tempo_trabalho_realizado,
                 mo.estimated_worktime AS tempo_estimado_trabalho,
+                mo.closed_at AS data_conclusao,
                 mo.executed_service_historic AS historico_servico_executado
         """
 

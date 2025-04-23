@@ -365,6 +365,9 @@ class ServiceOrder(models.Model):
     estimated_worktime = models.FloatField(default=0)
     performed_worktime = models.FloatField(default=0)
     executed_service_historic = models.TextField(null=True)
+    closed_at = models.DateTimeField(null=True)
+    maint_started_at = models.DateTimeField(null=True)
+    maint_finished_at = models.DateTimeField(null=True)
 
     class Meta:
         """Definição do nome da tabela"""
