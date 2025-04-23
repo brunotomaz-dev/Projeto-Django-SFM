@@ -1144,6 +1144,9 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         self._add_date_equal_filter(
             "data_conclusao", "mo.closed_at", where_clauses, params, request
         )
+        self._add_date_equal_filter(
+            "inicio_atendimento", "mo.maint_started_at", where_clauses, params, request
+        )
 
         # Filtro para data_criacao__gt (maior ou igual)
         self._add_date_filter(
