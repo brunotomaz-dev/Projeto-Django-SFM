@@ -1130,7 +1130,7 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
                     # Precisa adicionar o mesmo valor três vezes, uma para cada condição
                     params.append(param_value)
                     params.append(param_value)
-                    params.append(param_value)
+                    # params.append(param_value)
             else:
                 if param_value:
                     # Para DATE(X) = Y, precisamos considerar que o dia em UTC pode ser
