@@ -1080,7 +1080,7 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
 
         Parâmetros:
         - param_name: Nome do parâmetro na URL (ex: 'data_criacao__gt')
-        - field_name: Nome do campo no banco de dados (ex: 'mo.created_at')
+        - field_name: Nome do campo no banco de dados (ex: 'os.created_at')
         - where_clauses: Lista de cláusulas WHERE
         - params: Lista de parâmetros para a query
         - request: Objeto de requisição
@@ -1122,9 +1122,9 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
                     where_clauses.append(
                         f"(({field_name} AT TIME ZONE 'UTC' "
                         f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date "
-                        f"OR (mo.maint_finished_at AT TIME ZONE 'UTC' "  # Corrigido
+                        f"OR (os.maint_finished_at AT TIME ZONE 'UTC' "  # Corrigido
                         f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date)"
-                        # f"OR (mo.updated_at AT TIME ZONE 'UTC' "  # Corrigido
+                        # f"OR (os.updated_at AT TIME ZONE 'UTC' "  # Corrigido
                         # f"AT TIME ZONE 'America/Sao_Paulo')::date = %s::date)"
                     )
                     # Precisa adicionar o mesmo valor três vezes, uma para cada condição
@@ -1156,25 +1156,29 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         params = []
 
         # Filtro para data_criacao (igualdade - filtro por dia específico no timezone local)
-        self._add_date_equal_filter("data_criacao", "mo.created_at", where_clauses, params, request)
+        self._add_date_equal_filter("data_criacao", "os.created_at", where_clauses, params, request)
         self._add_date_equal_filter(
-            "data_conclusao", "mo.closed_at", where_clauses, params, request
+            "data_conclusao", "os.closed_at", where_clauses, params, request
         )
         self._add_date_equal_filter(
-            "inicio_atendimento", "mo.maint_started_at", where_clauses, params, request
+            "inicio_atendimento", "os.maint_started_at", where_clauses, params, request
         )
 
         # Filtro para data_criacao__gt (maior ou igual)
         self._add_date_filter(
-            "data_criacao__gt", "DATE(mo.created_at)", where_clauses, params, request
+            "data_criacao__gt", "DATE(os.created_at)", where_clauses, params, request
         )
 
         # Outros filtros existentes
         self._add_equality_filter(
-            "status_id", "mo.maint_order_status_id", where_clauses, params, request
+            "status_id", "os.maint_order_status_id", where_clauses, params, request
         )
 
-        self._add_equality_filter("numero_os", "mo.order_number", where_clauses, params, request)
+        self._add_equality_filter("numero_os", "os.order_number", where_clauses, params, request)
+
+        self._add_equality_filter(
+            "tipo_manutencao", "os.maint_service_type_id", where_clauses, params, request
+        )
 
         return where_clauses, params
 
@@ -1208,7 +1212,7 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
             query += " WHERE " + " AND ".join(where_clauses)
 
         # Adicione ordenação e limite
-        query += " ORDER BY mo.created_at DESC LIMIT 100"
+        query += " ORDER BY os.created_at DESC LIMIT 1000"
 
         return query, params
 
@@ -1275,8 +1279,8 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         # Select
         select_ = """
             SELECT
-                mo.id,
-                mo.order_number AS numero_os,
+                os.id,
+                os.order_number AS numero_os,
                 l1.code AS codigo_localizacao_nivel1,
                 l1.description AS descricao_localizacao_nivel1,
                 l2.code AS codigo_localizacao_nivel2,
@@ -1287,24 +1291,24 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
                 ass.description AS ativo,
                 matype.description AS tipo_manutencao,
                 matnat.description as natureza_manutencao,
-                mo.maint_req_id AS numero_ss,
+                os.maint_req_id AS numero_ss,
                 ss.requestor AS solicitante_ss,
                 mst.description AS assunto_principal,
                 mst1.description AS assunto_secundario,
-                mo.description AS descricao,
-                mo.maint_order_status_id as status_id,
+                os.description AS descricao,
+                os.maint_order_status_id as status_id,
                 st.description AS status,
-                mo.priority AS prioridade,
-                mo.priority_calculated AS prioridade_calculada,
-                mo.created_at AS data_criacao,
-                mo.user_text AS criado_por,
+                os.priority AS prioridade,
+                os.priority_calculated AS prioridade_calculada,
+                os.created_at AS data_criacao,
+                os.user_text AS criado_por,
                 ep.name AS responsavel_manutencao,
-                mo.maint_started_at AS inicio_atendimento,
-                mo.maint_finished_at AS fim_atendimento,
-                mo.performed_worktime AS tempo_trabalho_realizado,
-                mo.estimated_worktime AS tempo_estimado_trabalho,
-                mo.closed_at AS data_conclusao,
-                mo.executed_service_historic AS historico_servico_executado
+                os.maint_started_at AS inicio_atendimento,
+                os.maint_finished_at AS fim_atendimento,
+                os.performed_worktime AS tempo_trabalho_realizado,
+                os.estimated_worktime AS tempo_estimado_trabalho,
+                os.closed_at AS data_conclusao,
+                os.executed_service_historic AS historico_servico_executado
         """
 
         # From
@@ -1312,29 +1316,27 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
 
         # Join
         join_ = """
-            JOIN areas AS ar
-                ON mo.area_id = ar.id
             LEFT JOIN locations AS l1
-                ON mo.first_loc_id = l1.id
+                ON os.first_loc_id = l1.id
             LEFT JOIN locations AS l2
-                ON mo.second_loc_id = l2.id
+                ON os.second_loc_id = l2.id
             LEFT JOIN locations AS l3
-                ON mo.third_loc_id = l3.id
+                ON os.third_loc_id = l3.id
             LEFT JOIN assets AS ass
-                ON mo.asset_id = ass.id
-            JOIN maint_service_type_translations AS matype
-                ON mo.maint_service_type_id = matype.maint_service_type_id
+                ON os.asset_id = ass.id
+            LEFT JOIN maint_service_type_translations AS matype
+                ON os.maint_service_type_id = matype.maint_service_type_id
                 AND matype.locale = 'pt-BR'
-            JOIN maint_service_nature_translations AS matnat
-                ON mo.maint_service_nature_id = matnat.maint_service_nature_id
-                AND matype.locale = 'pt-BR'
+            LEFT JOIN maint_service_nature_translations AS matnat
+                ON os.maint_service_nature_id = matnat.maint_service_nature_id
+                AND matnat.locale = 'pt-BR'
             LEFT JOIN employees AS ep
-                ON mo.employee_id = ep.id
-            JOIN maint_order_status_translations AS st
-                ON mo.maint_order_status_id = st.maint_order_status_id
+                ON os.employee_id = ep.id
+            LEFT JOIN maint_order_status_translations AS st
+                ON os.maint_order_status_id = st.maint_order_status_id
                 AND st.locale = 'pt-BR'
             LEFT JOIN maint_reqs AS ss
-                ON mo.maint_req_id = ss.id
+                ON os.maint_req_id = ss.id
             LEFT JOIN maint_subject_translations AS mst
                 ON ss.maint_subject_id = mst.maint_subject_id
                 AND mst.locale = 'pt-BR'
@@ -1387,7 +1389,7 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
 
         Parâmetros:
         - param_name: Nome do parâmetro na URL (ex: 'data_criacao__gt')
-        - field_name: Nome do campo no banco de dados (ex: 'mo.created_at')
+        - field_name: Nome do campo no banco de dados (ex: 'os.created_at')
         - where_clauses: Lista de cláusulas WHERE
         - params: Lista de parâmetros para a query
         - request: Objeto de requisição
