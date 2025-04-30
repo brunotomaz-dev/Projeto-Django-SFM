@@ -1180,6 +1180,8 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
             "tipo_manutencao", "os.maint_service_type_id", where_clauses, params, request
         )
 
+        self._add_equality_filter("cod_ativo", "ass.code", where_clauses, params, request)
+
         return where_clauses, params
 
     def _process_query_results(self, cursor, results):
