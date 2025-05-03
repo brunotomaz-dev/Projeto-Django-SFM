@@ -19,6 +19,7 @@ from .views import (
     MaquinaInfoProductionViewSet,
     MaquinaInfoViewSet,
     PerformanceViewSet,
+    PLCViewSet,
     PresenceLogViewSet,
     QualidadeIHMViewSet,
     QualProdViewSet,
@@ -62,8 +63,7 @@ urlpatterns = [
     path("caixas_cf/", StockOnCFViewSet.as_view(), name="caixas_cf"),
     path("cart_count/", CartCountViewSet.as_view(), name="cart_count"),
     path("productionByDay/", StockStatusViewSet.as_view(), name="productionByDay"),
-    path(
-        "reprocess_indicators/", reprocess_indicators, name="reprocess_indicators"
-    ),  # Adicione a nova rota
+    path("reprocess_indicators/", reprocess_indicators, name="reprocess_indicators"),
+    path("plc/", PLCViewSet.as_view(), name="plc"),
     path("", include(router.urls)),
 ]
