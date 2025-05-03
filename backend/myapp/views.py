@@ -1315,7 +1315,7 @@ class ServiceOrderViewSet(ReadOnlyDynamicFieldsViewSets):
         """
 
         # From
-        from_ = "FROM maint_orders AS mo"
+        from_ = "FROM maint_orders AS os"
 
         # Join
         join_ = """
