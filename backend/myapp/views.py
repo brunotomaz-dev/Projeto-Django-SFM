@@ -1498,7 +1498,7 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
             query += " WHERE " + " AND ".join(where_clauses)
 
         # Adicione ordenação e limite
-        query += " ORDER BY ss.created_at DESC LIMIT 100"
+        query += " ORDER BY ss.created_at DESC LIMIT 1000"
 
         return query, params
 
@@ -1610,6 +1610,93 @@ class ServiceRequestViewSet(ReadOnlyDynamicFieldsViewSets):
         """
 
         return select_ + from_ + join_
+
+    def get_serializer(self, *args, **kwargs):
+        """
+        Sobrescreve o método get_serializer para permitir selecionar campos específicos,
+        incluindo os que foram adicionados pelos JOINs.
+        """
+        # Recupera os campos dinâmicos da query string
+        fields = self.request.query_params.get("fields", None)
+
+        # Se houver campos dinâmicos, passa-os para o serializador
+        kwargs["fields"] = fields.split(",") if fields else None
+
+        return super().get_serializer(*args, **kwargs)
+
+
+class AssetsPreventiveViewSet(ReadOnlyDynamicFieldsViewSets):
+    """
+    ViewSet para visualizar as requisições de manutenção preventiva de ativos.
+    """
+
+    queryset = ServiceRequest.objects.all()  # pylint: disable=E1101
+    serializer_class = ServiceRequestSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def __build_query(self):
+        """
+        Constrói a consulta SQL personalizada para obter os ativos de manutenção preventiva.
+
+        Retorna:
+            str: Consulta SQL personalizada
+        """
+
+        # cSpell: words codigo localizacao descricao nivel matype matnat maint manutencao
+        # cSpell: words secundario criacao responsavel worktime historico servico reqs
+
+        # Select
+        query = """
+            SELECT DISTINCT
+                ass.code as codigo_ativo,
+                ass.description AS ativo
+            FROM maint_orders AS mo
+            LEFT JOIN assets AS ass
+                ON mo.asset_id = ass.id
+                where mo.maint_service_type_id in (1, 6) and mo.maint_order_status_id = 3
+            order by ass.description LIMIT 1000
+            """
+
+        return query
+
+    def __process_query_results(self, cursor, results):
+        """Processa os resultados da query e retorna como uma lista de dicionários."""
+        columns = [col[0] for col in cursor.description]
+        data = []
+        for row in results:
+            item = {}
+            for i, col in enumerate(columns):
+                item[col] = row[i]
+            data.append(item)
+        return data
+
+    def __execute_query(self, query):
+        """
+        Executa a consulta SQL personalizada e retorna os resultados.
+        """
+        with connections["postgres"].cursor() as cursor:
+            cursor.execute(query)
+
+            # Verifique se há resultados válidos
+            if cursor.description is None:
+                return Response([])
+
+            results = cursor.fetchall()
+            if not results:
+                return Response([])
+
+            # Processe os resultados
+            data = self.__process_query_results(cursor, results)
+
+            return Response(data)
+
+    def list(self, request, *args, **kwargs):
+        """
+        Lida com a solicitação GET para listar os ativos de manutenção preventiva.
+        """
+        query = self.__build_query()
+        return self.__execute_query(query)
 
     def get_serializer(self, *args, **kwargs):
         """

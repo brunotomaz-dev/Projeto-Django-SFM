@@ -10,6 +10,7 @@ from .reprocess import reprocess_indicators  # Altere esta importação
 from .views import (
     AbsenceViewSet,
     ActionPlanViewSet,
+    AssetsPreventiveViewSet,
     CartCountViewSet,
     CustomTokenObtainPairView,
     EficienciaViewSet,
@@ -47,6 +48,7 @@ router.register(r"presence_log", PresenceLogViewSet)
 router.register(r"action_plan", ActionPlanViewSet)
 router.register(r"service_order", ServiceOrderViewSet)
 router.register(r"service_request", ServiceRequestViewSet)
+router.register(r"assets_preventive", AssetsPreventiveViewSet, basename="assets_preventive")
 
 
 urlpatterns = [
