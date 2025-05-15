@@ -1654,7 +1654,8 @@ class AssetsPreventiveViewSet(ReadOnlyDynamicFieldsViewSets):
             FROM maint_orders AS mo
             LEFT JOIN assets AS ass
                 ON mo.asset_id = ass.id
-                where mo.maint_service_type_id in (1, 6) and mo.maint_order_status_id = 3
+            WHERE mo.maint_service_type_id in (1, 6) AND mo.maint_order_status_id = 3
+                AND mo.description LIKE ('PREV%') OR mo.description LIKE ('PINSP%')
             order by ass.description LIMIT 1000
             """
 
