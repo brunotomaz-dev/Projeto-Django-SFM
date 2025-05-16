@@ -1647,17 +1647,39 @@ class AssetsPreventiveViewSet(ReadOnlyDynamicFieldsViewSets):
         # cSpell: words secundario criacao responsavel worktime historico servico reqs
 
         # Select
+        # query = """
+        #     SELECT DISTINCT
+        #         ass.code as codigo_ativo,
+        #         ass.description AS ativo
+        #     FROM maint_orders AS mo
+        #     LEFT JOIN assets AS ass
+        #         ON mo.asset_id = ass.id
+        #     WHERE mo.maint_service_type_id in (1, 6) AND mo.maint_order_status_id = 3
+        #         AND mo.description LIKE ('PREV%') OR mo.description LIKE ('PINSP%')
+        #     ORDER BY ass.description LIMIT 1000
+        #     """
+
+        # NOTE: Esta consulta foi feita para corrigir erros até acerto de corretiva pontual
+        # cSpell: words guilhermoni goncalves
         query = """
-            SELECT DISTINCT
-                ass.code as codigo_ativo,
-                ass.description AS ativo
-            FROM maint_orders AS mo
-            LEFT JOIN assets AS ass
-                ON mo.asset_id = ass.id
-            WHERE mo.maint_service_type_id in (1, 6) AND mo.maint_order_status_id = 3
-                AND mo.description LIKE ('PREV%') OR mo.description LIKE ('PINSP%')
-            order by ass.description LIMIT 1000
-            """
+        SELECT DISTINCT
+            mo.user_text AS criado_por,
+            ep.name AS responsavel_manutencao,
+            mo.maint_service_type_id,
+            ass.code as codigo_ativo,
+            ass.description AS ativo
+        FROM maint_orders AS mo
+        LEFT JOIN assets AS ass
+            ON mo.asset_id = ass.id
+        LEFT JOIN employees AS ep
+            ON mo.employee_id = ep.id
+        WHERE (mo.maint_service_type_id = 1
+                AND (mo.description LIKE ('PREV%') OR mo.description LIKE ('PINSP%'))
+            OR (mo.maint_service_type_id = 6
+                AND (mo.user_text LIKE ('%GUILHERMONI%') OR ep.name LIKE ('%GONCALVES%'))))
+            AND mo.maint_order_status_id = 3
+        ORDER BY ass.description LIMIT 1000
+        """
 
         return query
 
