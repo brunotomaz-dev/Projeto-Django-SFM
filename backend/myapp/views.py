@@ -1663,9 +1663,6 @@ class AssetsPreventiveViewSet(ReadOnlyDynamicFieldsViewSets):
         # cSpell: words guilhermoni goncalves
         query = """
         SELECT DISTINCT
-            mo.user_text AS criado_por,
-            ep.name AS responsavel_manutencao,
-            mo.maint_service_type_id,
             ass.code as codigo_ativo,
             ass.description AS ativo
         FROM maint_orders AS mo
