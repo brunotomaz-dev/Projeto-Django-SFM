@@ -208,10 +208,22 @@ class PresenceLogFilter(django_filters.FilterSet):
 
 
 class ActionPlanFilter(django_filters.FilterSet):
-    """Filtro para registros de presença"""
+    """Filtro para registros de plano de ação"""
 
     data_registro = django_filters.DateFilter(field_name="data_registro")
-    conclusao = django_filters.CharFilter(lookup_expr="exact")
+    # Substitui o filtro atual por um método personalizado
+    conclusao = django_filters.CharFilter(method="filter_conclusao")
+
+    def filter_conclusao(self, queryset, _name, value):
+        """
+        Filtra o queryset baseado nos valores de conclusão fornecidos.
+        Permite valores únicos ou múltiplos separados por vírgula.
+        """
+        if "," in value:  # Se contém vírgula, é uma lista de valores
+            conclusao_values = [int(v.strip()) for v in value.split(",")]
+            return queryset.filter(conclusao__in=conclusao_values)
+        # Caso contrário, é um único valor
+        return queryset.filter(conclusao=int(value))
 
     class Meta:
         """Classe de metadados"""
@@ -219,7 +231,6 @@ class ActionPlanFilter(django_filters.FilterSet):
         model = ActionPlan
         fields = {
             "data_registro": ["exact", "gt", "lt", "gte", "lte"],
-            "conclusao": ["exact"],
         }
 
 
