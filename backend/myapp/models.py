@@ -305,6 +305,7 @@ class ActionPlan(models.Model):
     data_conclusao = models.DateField(null=True)
     conclusao = models.SmallIntegerField()
     lvl = models.SmallIntegerField()
+    prazo = models.DateField(null=True)
 
     class Meta:
         """Definição do nome da tabela"""
