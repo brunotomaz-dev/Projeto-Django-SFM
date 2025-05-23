@@ -256,13 +256,14 @@ class AbsenceLog(models.Model):
     data_registro = models.DateField()
     hora_registro = models.TimeField()
     data_occ = models.DateField()
+    data_retorno = models.DateField(null=True)
     usuario = models.CharField(max_length=50)
 
     class Meta:
         """Definição do nome da tabela"""
 
         db_table = "analysis_absent"
-        indexes = [models.Index(fields=["data_registro"])]
+        indexes = [models.Index(fields=["data_registro", "data_occ", "data_retorno"])]
 
 
 class PresenceLog(models.Model):
