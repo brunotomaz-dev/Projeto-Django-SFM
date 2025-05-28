@@ -297,7 +297,7 @@ class ActionPlan(models.Model):
     impacto = models.SmallIntegerField()
     data_registro = models.DateField()
     turno = models.CharField(max_length=3)
-    descricao = models.CharField(max_length=256)
+    descricao = models.CharField(max_length=512)
     causa_raiz = models.CharField(max_length=256)
     contencao = models.CharField(max_length=256)
     solucao = models.CharField(max_length=256)
