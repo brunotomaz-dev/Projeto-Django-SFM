@@ -845,6 +845,11 @@ class ProductionIndicators:
             df_total_cycles = df_prod[
                 ["linha", "maquina_id", "data_registro", "turno", "total_ciclos", "produto"]
             ]
+
+            # Garantir que a coluna de data_registro esteja no formato datetime
+            df_total_cycles["data_registro"] = pd.to_datetime(df_total_cycles["data_registro"])
+            df_running["data_registro"] = pd.to_datetime(df_running["data_registro"])
+
             # Unir os dataframes de produção e running
             df_total_cycles = pd.merge(
                 df_total_cycles,
