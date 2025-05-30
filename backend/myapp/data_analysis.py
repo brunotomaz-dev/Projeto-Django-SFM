@@ -841,7 +841,6 @@ class ProductionIndicators:
             df = df.drop(columns="programada")
 
         if indicador == IndicatorType.PERFORMANCE:
-            print("Ajustando indicador de performance")
             df_total_cycles = df_prod[
                 ["linha", "maquina_id", "data_registro", "turno", "total_ciclos", "produto"]
             ]
@@ -886,7 +885,6 @@ class ProductionIndicators:
             df = df.drop(columns="diff")
 
             df = df.fillna(0)
-            print("Perf", df.head())
 
         # Definir valor máximo e mínimo do indicador
         df[indicador.value] = df[indicador.value].clip(0, 1)
