@@ -869,10 +869,11 @@ class ProductionIndicators:
                 on=["linha", "maquina_id", "data_registro", "turno"],
                 how="left",
             )
-            df[indicador.value] = df[indicador.value] + df["diff"]
+            df[indicador.value] = (df[indicador.value] + df["diff"]).round(3)
             df = df.drop(columns="diff")
 
             df = df.fillna(0)
+            print("Perf", df.head())
 
         # Definir valor máximo e mínimo do indicador
         df[indicador.value] = df[indicador.value].clip(0, 1)
