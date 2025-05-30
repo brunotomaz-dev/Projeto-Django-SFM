@@ -621,6 +621,16 @@ class ProductionIndicators:
         # Reinicia o index
         df_stops = df_stops.reset_index(drop=True)
 
+        # Separa onde está rodando
+        df_running = df_info[df_info.status == "rodando"]
+
+        # Soma o tempo total rodando por máquina, linha, data e turno
+        df_running = (
+            df_running.groupby(["maquina_id", "linha", "data_registro", "turno"], observed=False)
+            .agg(tempo=("tempo", "sum"))
+            .reset_index()
+        )
+
         # Dict com os descontos
         desc_dict = {
             IndicatorType.EFFICIENCY: DESC_EFF,
@@ -682,7 +692,9 @@ class ProductionIndicators:
 
         # Ajusta o indicador
         if indicator != IndicatorType.EFFICIENCY:
-            df: pd.DataFrame = indicator_adjustment_functions(df, indicator, paradas_programadas)
+            df: pd.DataFrame = indicator_adjustment_functions(
+                df, indicator, paradas_programadas, df_prod, df_running
+            )
         else:
             df: pd.DataFrame = indicator_adjustment_functions(df, indicator)
 
@@ -786,7 +798,11 @@ class ProductionIndicators:
 
     @staticmethod
     def __adjust(
-        df: pd.DataFrame, indicador: IndicatorType, paradas_programadas: pd.Series
+        df: pd.DataFrame,
+        indicador: IndicatorType,
+        paradas_programadas: pd.Series,
+        df_prod: pd.DataFrame = None,
+        df_running: pd.DataFrame = None,
     ) -> pd.DataFrame:
         """
         Ajusta os indicadores de performance e reparos.
@@ -815,6 +831,48 @@ class ProductionIndicators:
 
         # Remove a coluna programada
         df = df.drop(columns="programada")
+
+        if indicador == IndicatorType.PERFORMANCE:
+            print("Ajustando indicador de performance")
+            df_total_cycles = df_prod[
+                ["linha", "maquina_id", "data_registro", "turno", "total_ciclos", "produto"]
+            ]
+            # Unir os dataframes de produção e running
+            df_total_cycles = pd.merge(
+                df_total_cycles,
+                df_running[["linha", "maquina_id", "data_registro", "turno", "tempo"]],
+                on=["linha", "maquina_id", "data_registro", "turno"],
+                how="left",
+            )
+
+            # Calcula os ciclos esperados ( CICLOS_ESPERADOS * 2 * tempo) do dataframe running
+            # Variável para identificar quando o produto possui a palavra " BOL "
+            mask_bolinha = df_total_cycles["produto"].str.contains(" BOL")
+
+            # Nova coluna para o tempo esperado de produção
+            df_total_cycles["cycles_expected"] = round(
+                df_total_cycles["tempo"] * (CICLOS_BOLINHA * 2) * mask_bolinha
+                + df_total_cycles["tempo"] * (CICLOS_ESPERADOS * 2) * ~mask_bolinha,
+                0,
+            )
+
+            df_total_cycles["diff"] = (
+                df_total_cycles["total_ciclos"] / df_total_cycles["cycles_expected"]
+            )
+            df_total_cycles["diff"] = df_total_cycles["diff"].clip(0, 1)
+            df_total_cycles["diff"] = (1 - df_total_cycles["diff"]).round(3)
+
+            # Une df e df_total_cycles somando a coluna diff e performance
+            df = pd.merge(
+                df,
+                df_total_cycles[["linha", "maquina_id", "data_registro", "turno", "diff"]],
+                on=["linha", "maquina_id", "data_registro", "turno"],
+                how="left",
+            )
+            df[indicador.value] = df[indicador.value] + df["diff"]
+            df = df.drop(columns="diff")
+
+            df = df.fillna(0)
 
         # Definir valor máximo e mínimo do indicador
         df[indicador.value] = df[indicador.value].clip(0, 1)
