@@ -814,23 +814,31 @@ class ProductionIndicators:
         # Corrige os valores nulos ou incorretos
         df[indicador.value] = df[indicador.value].replace([np.inf, -np.inf], 0).fillna(0)
 
-        # Ajuste para paradas programadas
-        paradas_programadas["programada"] = 1
+        # Verificar se há dados em paradas_programadas
+        if not paradas_programadas.empty:
+            # Ajuste para paradas programadas
+            paradas_programadas["programada"] = 1
 
-        # Garantir que data_registro seja datetime
-        paradas_programadas.data_registro = pd.to_datetime(paradas_programadas.data_registro)
-        df.data_registro = pd.to_datetime(df.data_registro)
+            # Força a conversão explícita para garantir tipos idênticos
+            # Aplica copy() para evitar avisos do pandas
+            paradas_df = paradas_programadas.copy()
+            paradas_df["data_registro"] = pd.to_datetime(paradas_df["data_registro"]).dt.date
+            df_copy = df.copy()
+            df_copy["data_registro"] = pd.to_datetime(df_copy["data_registro"]).dt.date
 
-        # Une os dois dataframes
-        df = pd.merge(df, paradas_programadas, how="left", on=["data_registro", "turno", "linha"])
+            # Une os dois dataframes
+            df = pd.merge(df_copy, paradas_df, how="left", on=["data_registro", "turno", "linha"])
 
-        # np.nan para paradas programadas
-        mask = df.programada == 1
-        df.loc[mask, indicador.value] = 0
-        df.loc[mask, "tempo_esperado"] = 0
+            # Restaura o tipo datetime64 original
+            df["data_registro"] = pd.to_datetime(df["data_registro"])
 
-        # Remove a coluna programada
-        df = df.drop(columns="programada")
+            # np.nan para paradas programadas
+            mask = df.programada == 1
+            df.loc[mask, indicador.value] = 0
+            df.loc[mask, "tempo_esperado"] = 0
+
+            # Remove a coluna programada
+            df = df.drop(columns="programada")
 
         if indicador == IndicatorType.PERFORMANCE:
             print("Ajustando indicador de performance")
