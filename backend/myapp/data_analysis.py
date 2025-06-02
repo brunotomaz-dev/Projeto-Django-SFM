@@ -841,7 +841,10 @@ class ProductionIndicators:
             df = df.drop(columns="programada")
 
         if indicador == IndicatorType.PERFORMANCE:
-            df_total_cycles = df_prod[
+            # Faz uma cópia do dataframe de produção
+            df_total_cycles = df_prod.copy()
+
+            df_total_cycles = df_total_cycles[
                 ["linha", "maquina_id", "data_registro", "turno", "total_ciclos", "produto"]
             ]
 
