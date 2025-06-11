@@ -20,6 +20,9 @@ class QualidadeDataProcessor:
             "descarte_paes",
             "descarte_paes_pasta",
             "descarte_pasta",
+            "reprocesso_pasta",
+            "reprocesso_paes",
+            "reprocesso_paes_pasta",
         ]
 
         # Arredonda valores
@@ -31,6 +34,9 @@ class QualidadeDataProcessor:
             mask = df[col] > 0
             df.loc[mask, col] = ((df[col] - PESO_SACO) / PESO_BANDEJAS).round(0)
             df[col] = df[col].astype(int).clip(lower=0)
+
+        # Preenche valores nulos com 0
+        df = df.fillna(0)
 
         return df
 

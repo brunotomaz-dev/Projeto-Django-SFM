@@ -123,11 +123,15 @@ class QualidadeIHM(models.Model):
     maquina_id = models.CharField(max_length=50)
     bdj_vazias = models.FloatField(null=True)
     bdj_retrabalho = models.FloatField(null=True)
-    descarte_paes = models.FloatField(null=True)  # cSpell: disable-line
-    descarte_paes_pasta = models.FloatField(null=True)  # cSpell: disable-line
+    descarte_paes = models.FloatField(null=True)  # cSpell: words paes
+    descarte_paes_pasta = models.FloatField(null=True)
     descarte_pasta = models.FloatField(null=True)
     data_registro = models.DateField()
     hora_registro = models.TimeField()
+    reprocesso_paes = models.FloatField(null=True)
+    reprocesso_pasta = models.FloatField(null=True)
+    reprocesso_paes_pasta = models.FloatField(null=True)
+    reprocesso_bdj = models.IntegerField(null=True)
 
     class Meta:
         """Definição do nome da tabela"""
@@ -153,9 +157,13 @@ class QualProd(models.Model):
     bdj_vazias = models.SmallIntegerField()
     bdj_retrabalho = models.SmallIntegerField()
     total_produzido = models.SmallIntegerField()
-    descarte_paes = models.FloatField(null=True)  # cSpell: disable-line
-    descarte_paes_pasta = models.FloatField(null=True)  # cSpell: disable-line
+    descarte_paes = models.FloatField(null=True)
+    descarte_paes_pasta = models.FloatField(null=True)
     descarte_pasta = models.FloatField(null=True)
+    reprocesso_paes = models.FloatField(null=True)
+    reprocesso_pasta = models.FloatField(null=True)
+    reprocesso_paes_pasta = models.FloatField(null=True)
+    reprocesso_bdj = models.IntegerField(null=True)
 
     class Meta:
         """Definição do nome da tabela"""
