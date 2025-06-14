@@ -788,7 +788,6 @@ class ProductionIndicators:
         # Definir valor máximo e mínimo do indicador
         df[indicator.value] = df[indicator.value].clip(0, 1.5)
 
-        # FIXME - Ajustado para ter o impacto necessário na linha parada o tempo todo - em testes
         # Ajustar para que se o desconto for menor que 5, a produção for menor que 20
         # e eficiência for igual a 0, a eficiência deve ser 0.01
         mask = (df.desconto < 5) & (df.total_produzido < 20) & (df[indicator.value] == 0)

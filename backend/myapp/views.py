@@ -185,8 +185,16 @@ class MaqInfoHourProductionViewSet(viewsets.ModelViewSet):
         try:
             queryset = self.filter_queryset(self.get_queryset())
 
+            # Se o queryset estiver vazio, retorne uma lista vazia com status 200
+            if not queryset.exists():
+                return Response([], status=status.HTTP_200_OK)
+
             # Converte o queryset em um DataFrame
             df = pd.DataFrame(list(queryset.values()))
+
+            # Se o DataFrame estiver vazio, retorne lista vazia com status 200
+            if df.empty:
+                return Response([], status=status.HTTP_200_OK)
 
             # Logger
             logger.info("Processando %d registros de produção", len(df))
@@ -200,7 +208,7 @@ class MaqInfoHourProductionViewSet(viewsets.ModelViewSet):
             # Logger de sucesso
             logger.debug("Dados processados com sucesso")
 
-            # Converte o DataFrame em um queryset
+            # Converte o DataFrame em uma um queryset
             df = processed_data.to_dict("records")
 
             # Serializa o queryset limpo e retorna a resposta
@@ -327,8 +335,16 @@ class QualidadeIHMViewSet(viewsets.ModelViewSet):
         try:
             queryset = self.filter_queryset(self.get_queryset())
 
+            # Se o queryset estiver vazio, retorne uma lista vazia com status 200
+            if not queryset.exists():
+                return Response([], status=status.HTTP_200_OK)
+
             # Converte o queryset em um DataFrame
             df = pd.DataFrame(list(queryset.values()))
+
+            # Se o DataFrame estiver vazio, retorne lista vazia com status 200
+            if df.empty:
+                return Response([], status=status.HTTP_200_OK)
 
             # Logger
             logger.info("Processando %d registros de qualidade", len(df))
@@ -349,6 +365,7 @@ class QualidadeIHMViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(df, many=True)
             return Response(serializer.data)
         except Exception as e:  # pylint: disable=W0718
+            # Apenas log e retorno de erro 500 para erros reais de processamento
             logger.error("Erro ao processar dados: %s", str(e))
             return Response(
                 {"error": f"Erro ao processar dados: {str(e)}"},
