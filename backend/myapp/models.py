@@ -407,3 +407,15 @@ class DetectorMetais(models.Model):
     peso_baixo_porcentagem = models.SmallIntegerField()
     peso_ok_porcentagem = models.SmallIntegerField()
     produto = models.CharField(max_length=256, null=True)
+
+    class Meta:
+        """Definição do nome da tabela"""
+
+        db_table = "detector_metal"
+        indexes = [models.Index(fields=["data_registro", "detector_id"])]
+
+    def __str__(self):
+        return (
+            f"Detector {self.detector_id} - {self.data_registro} - "
+            f"{self.hora_registro} - Produto: {self.produto}"
+        )
