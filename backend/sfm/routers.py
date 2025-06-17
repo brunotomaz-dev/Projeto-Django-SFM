@@ -20,6 +20,7 @@ class SpecificTablesRouter:
         "analysis_absent",
         "analysis_presence",
         "analysis_actionPlan",
+        "detector_metais",
     ]
 
     # Foreign tables do PostgreSQL para manutenção - não pode ser alterado

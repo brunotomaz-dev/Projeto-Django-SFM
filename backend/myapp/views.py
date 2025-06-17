@@ -23,6 +23,7 @@ from .data_analysis import CleanData
 from .filters import (
     AbsenceLogFilter,
     ActionPlanFilter,
+    DetectorMetaisFilter,
     EficienciaFilter,
     InfoIHMFilter,
     MaquinaIHMFilter,
@@ -38,6 +39,7 @@ from .filters import (
 from .models import (
     AbsenceLog,
     ActionPlan,
+    DetectorMetais,
     Eficiencia,
     InfoIHM,
     MaquinaIHM,
@@ -55,6 +57,7 @@ from .serializers import (
     AbsenceLogSerializer,
     ActionPlanSerializer,
     CustomTokenObtainPairSerializer,
+    DetectorMetaisSerializer,
     EficienciaSerializer,
     InfoIHMSerializer,
     MaquinaIHMSerializer,
@@ -541,6 +544,24 @@ class PresenceLogViewSet(viewsets.ModelViewSet):
     filterset_class = PresenceLogFilter
     permission_classes = [HomeAccessPermission]
     authentication_classes = [AppTokenAuthentication, JWTAuthentication]
+
+
+# ================================================================================================ #
+#                                        DETECTOR DE METAIS                                        #
+# ================================================================================================ #
+class DetectorMetaisViewSet(BasicDynamicFieldsViewSets):
+    """
+    ViewSet para gerenciamento de registros de Detector de Metais.
+    Este ViewSet fornece operações CRUD (Create, Read, Update, Delete) para o modelo DetectorMetais.
+    Inclui filtragem, autenticação JWT e requer que o usuário esteja autenticado.
+    """
+
+    queryset = DetectorMetais.objects.all()  # pylint: disable=E1101
+    serializer_class = DetectorMetaisSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = DetectorMetaisFilter
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
 
 # ================================================================================================ #

@@ -13,6 +13,7 @@ from .views import (
     AssetsPreventiveViewSet,
     CartCountViewSet,
     CustomTokenObtainPairView,
+    DetectorMetaisViewSet,
     EficienciaViewSet,
     InfoIHMViewSet,
     MaqInfoHourProductionViewSet,
@@ -49,6 +50,7 @@ router.register(r"action_plan", ActionPlanViewSet)
 router.register(r"service_order", ServiceOrderViewSet)
 router.register(r"service_request", ServiceRequestViewSet)
 router.register(r"assets_preventive", AssetsPreventiveViewSet, basename="assets_preventive")
+router.register(r"detector_metais", DetectorMetaisViewSet, basename="detector_metais")
 
 
 urlpatterns = [

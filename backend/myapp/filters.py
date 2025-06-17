@@ -7,6 +7,7 @@ import django_filters
 from .models import (
     AbsenceLog,
     ActionPlan,
+    DetectorMetais,
     Eficiencia,
     InfoIHM,
     MaquinaIHM,
@@ -269,4 +270,19 @@ class ServiceRequestFilter(django_filters.FilterSet):
             "created_at": ["exact", "gt", "lt", "gte", "lte"],
             "maint_req_status_id": ["exact"],
             "req_number": ["exact"],
+        }
+
+
+class DetectorMetaisFilter(django_filters.FilterSet):
+    """Filtro para registros de detector de metais"""
+
+    data_registro = django_filters.DateFilter(field_name="data_registro")
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = DetectorMetais
+        fields = {
+            "data_registro": ["exact", "gt", "lt", "gte", "lte"],
+            "detector_id": ["exact"],
         }

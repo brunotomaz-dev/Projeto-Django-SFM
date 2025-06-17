@@ -387,3 +387,23 @@ class ServiceOrder(models.Model):
 
     def __str__(self):
         return f"OS {self.order_number} - Status: {self.maint_order_status_id}"
+
+
+class DetectorMetais(models.Model):
+    """Tabela de Detector de Metais"""
+
+    recno = models.AutoField(primary_key=True)
+    data_registro = models.DateField()
+    hora_registro = models.TimeField()
+    turno = models.CharField(max_length=3)
+    detector_id = models.SmallIntegerField()
+    peso_alto_bandejas = models.SmallIntegerField()
+    peso_baixo_bandejas = models.SmallIntegerField()
+    peso_ok_bandejas = models.SmallIntegerField()
+    peso_alto_media = models.SmallIntegerField()
+    peso_baixo_media = models.SmallIntegerField()
+    peso_ok_media = models.SmallIntegerField()
+    peso_alto_porcentagem = models.SmallIntegerField()
+    peso_baixo_porcentagem = models.SmallIntegerField()
+    peso_ok_porcentagem = models.SmallIntegerField()
+    produto = models.CharField(max_length=256, null=True)

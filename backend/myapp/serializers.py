@@ -9,6 +9,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     AbsenceLog,
     ActionPlan,
+    DetectorMetais,
     Eficiencia,
     InfoIHM,
     MaquinaCadastro,
@@ -257,4 +258,14 @@ class ServiceRequestSerializer(DynamicFieldsModelSerializer):
         """Classe de metadados"""
 
         model = ServiceRequest
+        fields = "__all__"
+
+
+class DetectorMetaisSerializer(DynamicFieldsModelSerializer):
+    """Serializador de dados de detector de metais"""
+
+    class Meta:
+        """Classe de metadados"""
+
+        model = DetectorMetais
         fields = "__all__"
