@@ -90,7 +90,7 @@ class QualidadeIHMViewSet(viewsets.ModelViewSet):
             )
 
     @action(detail=False, methods=["get"], url_path="raw", url_name="raw_data")
-    def raw_data(self, request, *args, **kwargs):
+    def raw_data(self, request, *args, **kwargs):  # pylint: disable=W0613
         """
         Retorna os dados originais sem processamento.
 
