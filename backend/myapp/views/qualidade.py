@@ -9,6 +9,7 @@ from myapp.models import QualidadeIHM
 from myapp.serializers import QualidadeIHMSerializer
 from myapp.views_processor import QualidadeDataProcessor
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -85,5 +86,40 @@ class QualidadeIHMViewSet(viewsets.ModelViewSet):
             logger.error("Erro ao processar dados: %s", str(e))
             return Response(
                 {"error": f"Erro ao processar dados: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["get"], url_path="raw", url_name="raw_data")
+    def raw_data(self, request, *args, **kwargs):
+        """
+        Retorna os dados originais sem processamento.
+
+        Este endpoint permite acessar os dados brutos do banco de dados,
+        antes de qualquer transformação ou cálculo aplicado pelo processador.
+
+        Exemplo de uso:
+        - GET /qualidade_ihm/raw/?data_registro=2021-01-01
+        """
+        try:
+            # Aplicar os mesmos filtros da lista normal
+            queryset = self.filter_queryset(self.get_queryset())
+
+            # Se o queryset estiver vazio, retorne uma lista vazia
+            if not queryset.exists():
+                return Response([], status=status.HTTP_200_OK)
+
+            # Serializa os dados originais diretamente, sem processamento adicional
+            serializer = self.get_serializer(queryset, many=True)
+
+            # Log informativo
+            logger.info("Retornando %d registros de qualidade RAW", queryset.count())
+
+            return Response(serializer.data)
+
+        except Exception as e:  # pylint: disable=W0718
+            # Log e tratamento de erros
+            logger.error("Erro ao obter dados brutos: %s", str(e))
+            return Response(
+                {"error": f"Erro ao obter dados brutos: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
