@@ -1,4 +1,4 @@
-'''Módulo de views do Django Rest Framework para Detector de Metais"""'''
+"""Módulo de views do Django Rest Framework para Detector de Metais"""
 
 from django_filters.rest_framework import DjangoFilterBackend
 from myapp.filters import DetectorMetaisFilter

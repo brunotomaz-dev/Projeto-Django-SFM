@@ -10,6 +10,7 @@ from myapp.permissions import HomeAccessPermission
 from myapp.serializers import QualProdSerializer
 from myapp.views.base import BasicDynamicFieldsViewSets
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -85,6 +86,83 @@ class MaquinaInfoProductionViewSet(APIView):
         data = self.execute_query(query)
 
         return Response(data)
+
+    @action(detail=False, methods=["get"], url_path="by-product", url_name="by_product")
+    def by_product(self, request):
+        """
+        Retorna uma lista de dados de máquina filtrada por período de tempo,
+        considerando a troca de produtos dentro do mesmo turno.
+
+        Query parameters:
+        - period: período de tempo no formato 'YYYY-MM-DD,YYYY-MM-DD' (obrigatório)
+
+        Resposta:
+        - results: lista de dicionários com os dados da máquina separados por produto
+        """
+        period = request.query_params.get("period", None)
+        if not period:
+            return Response(
+                {"error": "Period parameter is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        first_day, last_day = self.parse_period(period)
+        if not first_day or not last_day:
+            return Response(
+                {"error": "Invalid period format. Use 'YYYY-MM-DD,YYYY-MM-DD'"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        query = self.build_product_query(first_day, last_day)
+        data = self.execute_query(query)
+
+        return Response(data)
+
+    def build_product_query(self, first_day, last_day):
+        """
+        Constrói consulta SQL que considera a troca de produtos dentro do mesmo turno.
+
+        Parâmetros:
+        - first_day: data de início do período no formato 'YYYY-MM-DD'
+        - last_day: data de fim do período no formato 'YYYY-MM-DD'
+
+        Retorna:
+        - query: consulta SQL para obter dados separados por produto
+        """
+        query = f"""
+            SELECT
+                linha,
+                maquina_id,
+                turno,
+                produto,
+                contagem_total_ciclos as total_ciclos,
+                contagem_total_produzido as total_produzido_sensor,
+                data_registro
+            FROM (
+                SELECT
+                    (SELECT TOP 1 t2.fabrica FROM AUTOMACAO.dbo.maquina_cadastro t2
+                    WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro
+                    ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as fabrica,
+                    (SELECT TOP 1 t2.linha FROM AUTOMACAO.dbo.maquina_cadastro t2
+                    WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro
+                    ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as linha,
+                    t1.maquina_id,
+                    t1.turno,
+                    t1.produto,
+                    t1.contagem_total_ciclos,
+                    t1.contagem_total_produzido,
+                    t1.data_registro,
+                    t1.hora_registro,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.data_registro, t1.turno, t1.maquina_id, t1.produto
+                        ORDER BY t1.data_registro DESC, t1.hora_registro DESC) AS rn
+                FROM AUTOMACAO.dbo.maquina_info t1
+            ) AS t
+            WHERE t.rn = 1
+                AND hora_registro > '00:01'
+                AND data_registro between '{first_day}' and '{last_day}'
+            ORDER BY data_registro, linha, maquina_id, turno, produto
+        """
+        return query
 
     def parse_period(self, period):
         """
