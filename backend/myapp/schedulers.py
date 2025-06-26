@@ -158,7 +158,7 @@ def create_production_data():
 
             prod_view = MaquinaInfoProductionViewSet.as_view()
             qual_view = QualidadeIHMViewSet.as_view({"get": "list"})
-            prod_data = _get_api_data("/api/maquinainfo/production/", params, prod_view)
+            prod_data = _get_api_data("/api/maquinainfo_production/", params, prod_view)
             qual_data = _get_api_data("/api/qualidade_ihm/", params, qual_view)
 
             if not prod_data.empty and not qual_data.empty:

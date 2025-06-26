@@ -51,6 +51,9 @@ router.register(r"service_order", ServiceOrderViewSet)
 router.register(r"service_request", ServiceRequestViewSet)
 router.register(r"assets_preventive", AssetsPreventiveViewSet, basename="assets_preventive")
 router.register(r"detector_metal", DetectorMetaisViewSet, basename="detector_metal")
+router.register(
+    r"maquinainfo_production", MaquinaInfoProductionViewSet, basename="maquinainfo_production"
+)
 
 
 urlpatterns = [
@@ -59,11 +62,6 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("change-password/", change_password, name="change-password"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
-    path(
-        "maquinainfo/production/",
-        MaquinaInfoProductionViewSet.as_view(),
-        name="maquinainfo_production",
-    ),
     path("caixas_cf/", StockOnCFViewSet.as_view(), name="caixas_cf"),
     path("cart_count/", CartCountViewSet.as_view(), name="cart_count"),
     path("productionByDay/", StockStatusViewSet.as_view(), name="productionByDay"),

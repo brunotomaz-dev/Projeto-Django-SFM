@@ -9,10 +9,9 @@ from myapp.models import QualProd
 from myapp.permissions import HomeAccessPermission
 from myapp.serializers import QualProdSerializer
 from myapp.views.base import BasicDynamicFieldsViewSets
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
@@ -50,15 +49,15 @@ class QualProdViewSet(BasicDynamicFieldsViewSets):
 # ================================================================================================ #
 #                                      MAQUINA INFO PRODUCTION                                     #
 # ================================================================================================ #
-class MaquinaInfoProductionViewSet(APIView):
+class MaquinaInfoProductionViewSet(viewsets.ViewSet):
     """
     Exibe informações de máquinas filtradas por período de tempo.
 
     Exemplo de uso:
-    - GET /maquinainfo/period/?period=2021-01-01,2021-01-31
+    - GET /maquinainfo_production/?period=2021-01-01,2021-01-31
     """
 
-    def get(self, request):
+    def list(self, request):
         """
         Retorna uma lista de dados de máquina filtrada por período de tempo.
 
