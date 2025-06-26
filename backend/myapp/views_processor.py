@@ -38,12 +38,17 @@ class QualidadeDataProcessor:
         # Preenche valores nulos com 0
         df = df.fillna(0)
 
+        # Remove coluna produto
+        if "produto" in df.columns:
+            df = df.drop(columns=["produto"])  # TODO Até implementar a adição do produto
+
         return df
 
 
 class ProductionDataProcessor:
     """
     Processa os dados de produção antes de serem enviados para o frontend.
+    Usado para ter caixas por hora de produção de cada máquina.
 
     Principais funcionalidades:
     - Processamento de data/hora

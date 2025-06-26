@@ -476,7 +476,12 @@ def join_qual_prod(prod: pd.DataFrame, qual: pd.DataFrame):
 
     # Agrupar os dados
     qual = (
-        qual.groupby(["linha", "maquina_id", "data_registro", "turno"]).sum().round(3).reset_index()
+        qual.groupby(
+            ["linha", "maquina_id", "data_registro", "turno"]
+        )  # TODO adicionar produto quando estiver ativo
+        .sum()
+        .round(3)
+        .reset_index()
     )
 
     # Classifica os dataframes por data
@@ -487,7 +492,12 @@ def join_qual_prod(prod: pd.DataFrame, qual: pd.DataFrame):
     df = pd.merge(
         prod,
         qual,
-        on=["linha", "maquina_id", "data_registro", "turno"],
+        on=[
+            "linha",
+            "maquina_id",
+            "data_registro",
+            "turno",
+        ],  # TODO adicionar produto quando estiver ativo
         how="left",
     )
 
