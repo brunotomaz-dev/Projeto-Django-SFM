@@ -21,7 +21,6 @@ from .views import (
     QualidadeIHMViewSet,
     QualProdViewSet,
 )
-from .views_processor import QualidadeDataProcessor
 
 logger = logging.getLogger(__name__)
 lock = threading.Lock()
@@ -155,12 +154,8 @@ def _get_production_quality_data(today):
     prod_data = _get_api_data("/api/maquinainfo_production/", params, prod_view)
     qual_data = _get_api_data("/api/qualidade_ihm/", params, qual_view)
 
-    if not qual_data.empty:
-        processor = QualidadeDataProcessor()
-        qual_data = processor.process_qualidade_data(qual_data)
-
-        if "produto" in qual_data.columns:
-            qual_data = qual_data.drop(columns=["produto"])
+    if "produto" in qual_data.columns:
+        qual_data = qual_data.drop(columns=["produto"])
 
     return prod_data, qual_data
 
