@@ -156,7 +156,7 @@ def create_production_data():
             params = {"period": f"{today},{today}"}
             # params = {"period": f"{DATA_ANALYSIS},{today}"}
 
-            prod_view = MaquinaInfoProductionViewSet.as_view()
+            prod_view = MaquinaInfoProductionViewSet.as_view({"get": "list"})
             qual_view = QualidadeIHMViewSet.as_view({"get": "list"})
             prod_data = _get_api_data("/api/maquinainfo_production/", params, prod_view)
             qual_data = _get_api_data("/api/qualidade_ihm/", params, qual_view)
