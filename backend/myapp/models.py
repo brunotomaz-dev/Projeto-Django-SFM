@@ -132,6 +132,7 @@ class QualidadeIHM(models.Model):
     reprocesso_pasta = models.FloatField(null=True)
     reprocesso_paes_pasta = models.FloatField(null=True)
     reprocesso_bdj = models.IntegerField(null=True)
+    produto = models.CharField(max_length=256, null=True)
 
     class Meta:
         """Definição do nome da tabela"""
