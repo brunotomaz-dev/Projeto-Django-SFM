@@ -72,9 +72,9 @@ def reprocess_full(request):
         # Converter para formato ISO se não estiver
         data = pd.to_datetime(data).strftime("%Y-%m-%d")
 
-        create_indicators(data)
-        create_production_data(data)
         analisar_dados(data)
+        create_production_data(data)
+        create_indicators(data)
         return Response(
             {"success": f"Reprocessamento completo para {data}"}, status=status.HTTP_200_OK
         )
