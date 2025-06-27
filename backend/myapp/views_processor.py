@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 
+from .data_analysis import join_qual_prod
 from .utils import PESO_BANDEJAS, PESO_SACO
 
 
@@ -35,12 +36,8 @@ class QualidadeDataProcessor:
             df.loc[mask, col] = ((df[col] - PESO_SACO) / PESO_BANDEJAS).round(0)
             df[col] = df[col].astype(int).clip(lower=0)
 
-        # Preenche valores nulos com 0
-        df = df.fillna(0)
-
-        # Remove coluna produto
-        if "produto" in df.columns:
-            df = df.drop(columns=["produto"])  # TODO Até implementar a adição do produto
+        # Preenche valores nulos com 0 exceto na coluna produto
+        df.loc[:, round_columns] = df[round_columns].fillna(0)
 
         return df
 
@@ -165,3 +162,42 @@ class ProductionDataProcessor:
         # result_df = result_df[result_df["total"] > 0].reset_index(drop=True)
 
         return result_df
+
+
+def byProductProcessor(prod: pd.DataFrame, f_day: str, l_day: str) -> pd.DataFrame:
+    from .schedulers import _get_api_data
+    from .views.qualidade import QualidadeIHMViewSet
+
+    params = {
+        "data_registro__gte": f_day,
+        "data_registro__lte": l_day,
+    }
+
+    qual = _get_api_data(
+        "/api/qualidade_ihm/", params, QualidadeIHMViewSet.as_view({"get": "list"})
+    )
+    df_prod = pd.DataFrame(prod) if prod else pd.DataFrame()
+
+    df_qual_prod = pd.DataFrame()
+
+    if not qual.empty and not df_prod.empty:
+        df_qual_prod = join_qual_prod(df_prod, qual)
+
+    # Manter apenas as colunas necessárias
+    df_qual_prod = df_qual_prod[
+        [
+            "linha",
+            "maquina_id",
+            "turno",
+            "produto",
+            "total_ciclos",
+            "total_produzido_sensor",
+            "total_produzido",
+            "data_registro",
+        ]
+    ]
+
+    # Resetar o índice
+    df_qual_prod = df_qual_prod.reset_index(drop=True)
+
+    return df_qual_prod

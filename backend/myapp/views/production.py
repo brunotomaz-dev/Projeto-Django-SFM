@@ -14,6 +14,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from ..views_processor import byProductProcessor
+
 
 # ================================================================================================ #
 #                                      PRODUCTION + QUALIDADE                                      #
@@ -114,7 +116,15 @@ class MaquinaInfoProductionViewSet(viewsets.ViewSet):
         query = self.build_product_query(first_day, last_day)
         data = self.execute_query(query)
 
-        return Response(data)
+        processed_data = byProductProcessor(data, first_day, last_day)
+
+        # Converter DataFrame para lista de dicionários (formato JSON)
+        if hasattr(processed_data, "to_dict"):
+            response_data = processed_data.to_dict("records")
+        else:
+            response_data = processed_data
+
+        return Response(response_data)
 
     def build_product_query(self, first_day, last_day):
         """

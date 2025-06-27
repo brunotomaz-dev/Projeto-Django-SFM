@@ -147,15 +147,13 @@ def analisar_dados(reprocess_date=None):
 def _get_production_quality_data(today):
     """Obtém dados de produção e qualidade da API"""
     params = {"period": f"{today},{today}"}
+    params_qual = {"data_registro": today}
     # params = {"period": f"{DATA_ANALYSIS},{today}"}
 
     prod_view = MaquinaInfoProductionViewSet.as_view({"get": "list"})
     qual_view = QualidadeIHMViewSet.as_view({"get": "list"})
     prod_data = _get_api_data("/api/maquinainfo_production/", params, prod_view)
-    qual_data = _get_api_data("/api/qualidade_ihm/", params, qual_view)
-
-    if "produto" in qual_data.columns:
-        qual_data = qual_data.drop(columns=["produto"])
+    qual_data = _get_api_data("/api/qualidade_ihm/", params_qual, qual_view)
 
     return prod_data, qual_data
 

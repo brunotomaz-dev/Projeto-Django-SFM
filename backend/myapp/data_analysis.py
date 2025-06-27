@@ -436,6 +436,55 @@ def clean_hora_registro(hora_str: str):
         return None
 
 
+# NOTE - Função para compatibilidade de dados sem produto
+def fill_missing_products(qual: pd.DataFrame, prod: pd.DataFrame) -> pd.DataFrame:
+    """
+    Preenche os produtos ausentes no DataFrame de qualidade com os produtos de produção.
+
+    Parâmetros:
+    qual (pd.DataFrame): O DataFrame de qualidade.
+    prod (pd.DataFrame): O DataFrame de produção.
+
+    Retorna:
+    pd.DataFrame: O DataFrame de qualidade com os produtos preenchidos.
+
+    """
+    # Criar uma cópia para não modificar o original
+    qual_filled = qual.copy()
+
+    # Criar um dicionário de mapeamento produto baseado em data, turno e maquina_id
+    # Remove duplicatas e produtos nulos do prod para criar o mapeamento
+    prod_clean = prod.dropna(subset=["produto"]).drop_duplicates(
+        subset=["data_registro", "turno", "maquina_id", "produto"]
+    )
+
+    # Identifica registros em qual onde produto está ausente (null ou vazio)
+    missing_product_mask = (
+        qual_filled["produto"].isna()
+        | (qual_filled["produto"].astype(str).str.strip() == "")
+        | (qual_filled["produto"].astype(str).str.strip() == "nan")
+    )
+
+    if missing_product_mask.sum() > 0:
+        # Para cada registro com produto ausente, tenta encontrar o produto correspondente
+        for idx in qual_filled[missing_product_mask].index:
+            row = qual_filled.loc[idx]
+
+            # Busca no prod um registro com mesma data, turno e maquina_id
+            matching_prod = prod_clean[
+                (prod_clean["data_registro"] == row["data_registro"])
+                & (prod_clean["turno"] == row["turno"])
+                & (prod_clean["maquina_id"] == row["maquina_id"])
+            ]
+
+            if not matching_prod.empty:
+                # Se encontrou match, usa o primeiro produto encontrado
+                produto_encontrado = matching_prod["produto"].iloc[0]
+                qual_filled.loc[idx, "produto"] = produto_encontrado
+
+    return qual_filled
+
+
 def join_qual_prod(prod: pd.DataFrame, qual: pd.DataFrame):
     """
     Junta os DataFrames de produção e qualidade.
@@ -474,11 +523,12 @@ def join_qual_prod(prod: pd.DataFrame, qual: pd.DataFrame):
 
     qual = qual.drop(columns=["hora_registro", "recno"])
 
+    # NOTE - Para preencher onde não houver o produto, vamos usar o produto da produção
+    qual = fill_missing_products(qual, prod)
+
     # Agrupar os dados
     qual = (
-        qual.groupby(
-            ["linha", "maquina_id", "data_registro", "turno"]
-        )  # TODO adicionar produto quando estiver ativo
+        qual.groupby(["linha", "maquina_id", "data_registro", "turno", "produto"])
         .sum()
         .round(3)
         .reset_index()
@@ -492,12 +542,7 @@ def join_qual_prod(prod: pd.DataFrame, qual: pd.DataFrame):
     df = pd.merge(
         prod,
         qual,
-        on=[
-            "linha",
-            "maquina_id",
-            "data_registro",
-            "turno",
-        ],  # TODO adicionar produto quando estiver ativo
+        on=["linha", "maquina_id", "data_registro", "turno", "produto"],
         how="left",
     )
 
