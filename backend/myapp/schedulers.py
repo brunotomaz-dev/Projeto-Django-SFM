@@ -110,13 +110,17 @@ def today_date():
     return pd.Timestamp("today").strftime("%Y-%m-%d")
 
 
-def analisar_dados():
+def analisar_dados(reprocess_date=None):
     """Função que será executada periodicamente"""
     with lock:
         try:
-
+            if reprocess_date:
+                # Se a data de reprocessamento for fornecida, use-a
+                today = reprocess_date
+            else:
+                today = today_date()
             # Criar request com filtros
-            params = {"data_registro": today_date()}
+            params = {"data_registro": today}
 
             # params = {
             #     "data_registro__gte": DATA_ANALYSIS,
@@ -140,7 +144,32 @@ def analisar_dados():
             connections.close_all()
 
 
-def create_production_data():
+def _get_production_quality_data(today):
+    """Obtém dados de produção e qualidade da API"""
+    params = {"period": f"{today},{today}"}
+    # params = {"period": f"{DATA_ANALYSIS},{today}"}
+
+    prod_view = MaquinaInfoProductionViewSet.as_view({"get": "list"})
+    qual_view = QualidadeIHMViewSet.as_view({"get": "list"})
+    prod_data = _get_api_data("/api/maquinainfo_production/", params, prod_view)
+    qual_data = _get_api_data("/api/qualidade_ihm/", params, qual_view)
+
+    return prod_data, qual_data
+
+
+def _save_qualprod_data(dados_processados):
+    """Salva os dados processados de qualidade e produção no banco de dados"""
+    with transaction.atomic():
+        for dado in dados_processados.to_dict("records"):
+            QualProd.objects.update_or_create(  # pylint: disable=no-member
+                maquina_id=dado["maquina_id"],
+                data_registro=dado["data_registro"],
+                turno=dado["turno"],
+                defaults=dado,
+            )
+
+
+def create_production_data(reprocess_date=None):
     """
     Função que cria dados de produção.
 
@@ -151,28 +180,15 @@ def create_production_data():
     """
     with lock:
         try:
-            today = today_date()
+            today = reprocess_date if reprocess_date else today_date()
 
-            params = {"period": f"{today},{today}"}
-            # params = {"period": f"{DATA_ANALYSIS},{today}"}
+            # Obter dados
+            prod_data, qual_data = _get_production_quality_data(today)
 
-            prod_view = MaquinaInfoProductionViewSet.as_view({"get": "list"})
-            qual_view = QualidadeIHMViewSet.as_view({"get": "list"})
-            prod_data = _get_api_data("/api/maquinainfo_production/", params, prod_view)
-            qual_data = _get_api_data("/api/qualidade_ihm/", params, qual_view)
-
+            # Processar dados se não estiverem vazios
             if not prod_data.empty and not qual_data.empty:
-
                 dados_processados = join_qual_prod(prod_data, qual_data)
-
-                with transaction.atomic():
-                    for dado in dados_processados.to_dict("records"):
-                        QualProd.objects.update_or_create(  # pylint: disable=no-member
-                            maquina_id=dado["maquina_id"],
-                            data_registro=dado["data_registro"],
-                            turno=dado["turno"],
-                            defaults=dado,
-                        )
+                _save_qualprod_data(dados_processados)
 
         except (ConnectionError, ValueError, KeyError) as e:
             logger.error("Erro ao criar dados de produção: %s", str(e))
