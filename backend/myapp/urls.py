@@ -6,7 +6,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
-from .reprocess import reprocess_indicators  # Altere esta importação
+from .reprocess import reprocess_full, reprocess_indicators
 from .views import (
     AbsenceViewSet,
     ActionPlanViewSet,
@@ -66,6 +66,7 @@ urlpatterns = [
     path("cart_count/", CartCountViewSet.as_view(), name="cart_count"),
     path("productionByDay/", StockStatusViewSet.as_view(), name="productionByDay"),
     path("reprocess_indicators/", reprocess_indicators, name="reprocess_indicators"),
+    path("reprocess_full/", reprocess_full, name="reprocess_full"),
     path("plc/", PLCViewSet.as_view(), name="plc"),
     path("", include(router.urls)),
 ]
