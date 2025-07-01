@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.db import connections, models, transaction
+from requests.exceptions import Timeout
 from rest_framework.test import APIRequestFactory
 
 from .data_analysis import InfoIHMJoin, ProductionIndicators, join_qual_prod
@@ -273,11 +274,19 @@ def create_indicators(reprocess_date=None):
 
 def analisar_all_dados():
     """Função que será executada periodicamente"""
-
-    analisar_dados()
-    create_production_data()
-    create_indicators()
-    # print("----------------------------- Concluído -----------------------------")
+    try:
+        analisar_dados()
+        create_production_data()
+        create_indicators()
+        logger.info("Análise de dados concluída com sucesso")
+    except Timeout:
+        logger.error("Timeout durante a análise de dados - servidor pode estar sobrecarregado")
+    except ConnectionError:
+        logger.error(
+            "Erro de conexão durante a análise de dados - verificar se o servidor está rodando"
+        )
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error("Erro inesperado durante a análise de dados: %s", str(e))
 
 
 # cSpell:ignore jobstore periodica
