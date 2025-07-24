@@ -7,6 +7,7 @@ import pandas as pd
 
 from .utils import (
     AF_REP,
+    CICLOS_240,
     CICLOS_BOLINHA,
     CICLOS_ESPERADOS,
     DESC_EFF,
@@ -173,7 +174,7 @@ class InfoIHMJoin:
         df.contagem_total_ciclos = df.contagem_total_ciclos.astype("Int64")
         df.contagem_total_produzido = df.contagem_total_produzido.astype("Int64")
 
-        # NOTE Ajustar Status - true/false para rodando/parada (.map vai bem para Series do pandas)
+        # Ajustar Status - true/false para rodando/parada (.map vai bem para Series do pandas)
         df.status = df.status.map({"true": "rodando", "false": "parada"})
 
         # REVIEW Reordenar as colunas (Mudança para uso da flag afeta_eff)
@@ -211,7 +212,7 @@ class InfoIHMJoin:
             }
         )
 
-        # REVIEW Ajustar flag afeta_eff (1 ñ afeta 0 afeta)
+        # Ajustar flag afeta_eff (1 ñ afeta 0 afeta)
         df.loc[
             df["motivo"].isin(NOT_EFF) | df["causa"].isin(NOT_EFF) | df["problema"].isin(NOT_EFF),
             "afeta_eff",
@@ -247,7 +248,6 @@ class InfoIHMJoin:
     @staticmethod
     def __fill_occ(df: pd.DataFrame) -> pd.DataFrame:
 
-        # REVIEW - Colunas de interesse (Mudança para uso da flag afeta_eff)
         fill_cols = [
             "motivo",
             "equipamento",
@@ -274,7 +274,7 @@ class InfoIHMJoin:
         mask = df.status == "rodando"
         df.loc[mask, fill_cols] = None
 
-        # REVIEW - Preenche na coluna afeta_eff caso não tenha valor
+        # Preenche na coluna afeta_eff caso não tenha valor
         df.afeta_eff = df.afeta_eff.fillna(0)
 
         return df
@@ -282,7 +282,7 @@ class InfoIHMJoin:
     @staticmethod
     def __motivo_change(df: pd.DataFrame) -> pd.DataFrame:
 
-        # REVIEW - Identifica mudanças (Adicionado verificação de afeta_eff)
+        # Identifica mudanças (Adicionado verificação de afeta_eff)
         mask = (df.motivo.ne(df.motivo.shift()) & df.motivo.notnull()) | (
             (df.causa.ne(df.causa.shift()) & df.causa.notnull())
             | (df.afeta_eff.ne(df.afeta_eff.shift()))
@@ -311,7 +311,7 @@ class InfoIHMJoin:
             df.data_registro.astype(str) + " " + df.hora_registro.astype(str)
         )
 
-        # REVIEW Agrupa por grupo e calcula a diferença de tempo (add afeta_eff)
+        # Agrupa por grupo e calcula a diferença de tempo
         df = (
             df.groupby(["group"])
             .agg(
@@ -406,7 +406,7 @@ class InfoIHMJoin:
         df.data_registro_ihm = df.data_registro_ihm.fillna(df.data_registro)
         df.hora_registro_ihm = df.hora_registro_ihm.fillna(df.hora_registro)
 
-        # REVIEW Ajusta afeta_eff para ser um inteiro
+        # Ajusta afeta_eff para ser um inteiro
         df.afeta_eff = df.afeta_eff.fillna(0).astype(int)
 
         return df
@@ -523,7 +523,7 @@ def join_qual_prod(prod: pd.DataFrame, qual: pd.DataFrame):
 
     qual = qual.drop(columns=["hora_registro", "recno"])
 
-    # NOTE - Para preencher onde não houver o produto, vamos usar o produto da produção
+    # Para preencher onde não houver o produto, vamos usar o produto da produção
     qual = fill_missing_products(qual, prod)
 
     # Agrupar os dados
@@ -616,7 +616,7 @@ class ProductionIndicators:
         # Caso o desconto seja maior que o tempo, o desconto deve ser igual ao tempo
         df.loc[:, "desconto"] = df[["desconto", "tempo"]].min(axis=1)
 
-        # REVIEW Lidar com o afeta_eff
+        # Lidar com o afeta_eff
         mask = df.afeta_eff == 1
         df.loc[mask, "desconto"] = df.loc[mask, "tempo"]
 
@@ -804,10 +804,17 @@ class ProductionIndicators:
         # Variável para identificar quando o produto possui a palavra " BOL "
         mask_bolinha = df["produto"].str.contains(" BOL")
 
-        # Nova coluna para o tempo esperado de produção
+        # Variável para identificar quando o produto possui a palavra '240'
+        mask_240 = df["produto"].str.contains("240")
+
+        # Variável que identifica o produto que não é bolinha e não é 240
+        mask_baguete = ~mask_bolinha & ~mask_240
+
+        # Nova coluna para o produção esperada de produção
         df["producao_esperada"] = round(
             df["tempo_esperado"] * (CICLOS_BOLINHA * 2) * mask_bolinha
-            + df["tempo_esperado"] * (CICLOS_ESPERADOS * 2) * ~mask_bolinha,
+            + df["tempo_esperado"] * (CICLOS_ESPERADOS * 2) * mask_baguete
+            + df["tempo_esperado"] * (CICLOS_240 * 2) * mask_240,
             0,
         )
 
@@ -916,12 +923,19 @@ class ProductionIndicators:
 
             # Calcula os ciclos esperados ( CICLOS_ESPERADOS * 2 * tempo) do dataframe running
             # Variável para identificar quando o produto possui a palavra " BOL "
-            mask_bolinha = df_total_cycles["produto"].str.contains(" BOL")
+            mask_bolinha = df["produto"].str.contains(" BOL")
+
+            # Variável para identificar quando o produto possui a palavra '240'
+            mask_240 = df["produto"].str.contains("240")
+
+            # Variável que identifica o produto que não é bolinha e não é 240
+            mask_baguete = ~mask_bolinha & ~mask_240
 
             # Nova coluna para o tempo esperado de produção
             df_total_cycles["cycles_expected"] = round(
                 df_total_cycles["tempo"] * (CICLOS_BOLINHA * 2) * mask_bolinha
-                + df_total_cycles["tempo"] * (CICLOS_ESPERADOS * 2) * ~mask_bolinha,
+                + df_total_cycles["tempo"] * (CICLOS_ESPERADOS * 2) * mask_baguete
+                + df_total_cycles["tempo"] * (CICLOS_240 * 2) * mask_240,
                 0,
             )
 
