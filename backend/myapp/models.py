@@ -409,6 +409,7 @@ class DetectorMetais(models.Model):
     peso_ok_porcentagem = models.SmallIntegerField()
     metal_detectado = models.SmallIntegerField()
     produto = models.CharField(max_length=256)
+    usuario = models.CharField(max_length=255, null=True)
 
     class Meta:
         """Definição do nome da tabela"""
